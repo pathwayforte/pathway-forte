@@ -29,8 +29,8 @@ Installation
     $ python3 -m pip install -e .
 
 
-.. |build| image:: https://travis-ci.com/PathwayForte/pathway-forte.svg?branch=master
-    :target: https://travis-ci.com/PathwayForte/pathway-forte
+.. |build| image:: https://travis-ci.com/pathwayforte/pathway-forte.svg?branch=master
+    :target: https://travis-ci.com/pathwayforte/pathway-forte
     :alt: Build Status
 
 .. |docs| image:: http://readthedocs.org/projects/pathwayforte/badge/?version=latest
