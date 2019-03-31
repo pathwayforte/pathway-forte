@@ -3,14 +3,6 @@ PathwayForte |build| |docs|
 A Python package for comparing the effect of pathway database choice in functional enrichment and classification
 methods.
 
-Structure
----------
-- src: Source code of the Python package
-- docs: Python package Documentation
-- data: Directories containing gmt files, TCGA gene expression data, enrichment scores and test data used in the paper
-  (in case proprocessing has been already conducted)
-- R: Scripts to download and handle TCGA gene expression data
-
 Installation
 ------------
 1. ``pathway_forte`` can be installed with the following commands:
