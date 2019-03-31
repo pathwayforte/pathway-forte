@@ -4,9 +4,8 @@ graft tests
 global-exclude *.py[cod] __pycache__ *.so *.dylib .DS_Store *.gpickle
 
 exclude .bumpversion.cfg
-exclude data
+include data
 
-recursive-include data *.gmt
 recursive-include data *.rst
 recursive-include docs *.py
 recursive-include docs *.rst
