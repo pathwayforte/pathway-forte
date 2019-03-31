@@ -106,3 +106,9 @@ ENV/
 
 resources/*
 .DS_Store
+
+# Data stuffs that should not be commited
+data/spia
+data/tcga_datasets
+data/results
+data/test
