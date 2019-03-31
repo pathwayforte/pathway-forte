@@ -1,5 +1,5 @@
-PathwayForte
-============
+PathwayForte |build| |docs|
+===========================
 A Python package for comparing the effect of pathway database choice in functional enrichment and classification
 methods.
 
@@ -27,3 +27,12 @@ Installation
     $ git clone https://github.com/pathwayforte/pathway-forte.git
     $ cd pathway-forte
     $ python3 -m pip install -e .
+
+
+.. |build| image:: https://travis-ci.com/PathwayForte/pathway-forte.svg?branch=master
+    :target: https://travis-ci.com/PathwayForte/pathway-forte
+    :alt: Build Status
+
+.. |docs| image:: http://readthedocs.org/projects/pathwayforte/badge/?version=latest
+    :target: https://pathwayforte.readthedocs.io/en/latest/
+    :alt: Documentation Status
