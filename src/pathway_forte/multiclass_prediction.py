@@ -4,7 +4,12 @@
 
 import numpy as np
 import pandas as pd
+from sklearn import metrics
 from sklearn.decomposition import PCA
+from sklearn.model_selection import GridSearchCV, KFold
+from sklearn.multiclass import OneVsOneClassifier
+from sklearn.svm import SVC
+from tqdm import tqdm
 
 
 def pca_chaining(X_train, X_test, explained_variance):
@@ -76,3 +81,73 @@ def get_class_labels(features_df, labels_df):
     class_labels = np.asarray(class_labels, dtype=int)
 
     return class_labels
+
+
+def convert_df_to_features_array(df):
+    # Get list of pathways as features
+    feature_cols = list(df.columns.values)
+
+    # Features
+    pathways = df[feature_cols]  # Features
+
+    # Transform features dataFrame to numpy array
+    pathways_array = pathways.values
+
+    return np.asarray(pathways_array)
+
+
+def train_multiclass_svm(X, y, inner_cv, outer_cv, chain_pca=False, explained_variance=0.95):
+    """Train SVM with multiclass labels with a defined hyperparameter space via a nested cross validation for TCGA
+    expression data.
+
+    :param Numpy.ndarray X: 2D array of pathway scores and samples
+    :param Numpy.ndarray y: 1D array of sample subtype labels
+    :param int inner_cv: number of folds for cross validation split in inner loop
+    :param int outer_cv: number of folds for cross validation split in outer loop
+    :param chain_pca: chain PCA to classifier
+    :param explained_variance: amount of variance retained
+    :return:
+    """
+    all_metrics = {}
+
+    target_names = ['Class 0', 'Class 1', 'Class 2', 'Class 3']
+
+    kf = KFold(n_splits=outer_cv, shuffle=True)
+
+    iterator = tqdm(kf.split(X, y))
+
+    for i, (train_index, test_index) in enumerate(iterator):
+
+        X_train = X[train_index]
+        X_test = X[test_index]
+        y_train, y_test = np.asarray([y[i] for i in train_index]), np.asarray(
+            [y[i] for i in test_index])
+
+        if chain_pca:
+            # Apply PCA
+            X_train, X_test = pca_chaining(X_train, X_test, explained_variance)
+
+        # Fit one classifier per class
+        # For each classifier, class is fit against all other classes
+        svm = OneVsOneClassifier(SVC(gamma='scale'))
+
+        # Set up possible values of parameters to optimize over
+        p_grid = {'estimator__kernel': ('linear', 'rbf'), 'estimator__C': [1, 10, 100]}
+
+        classifier = GridSearchCV(estimator=svm, param_grid=p_grid, cv=inner_cv)
+
+        classifier.fit(X_train, y_train)
+        y_pred = classifier.predict(X_test)
+
+        # Get the subset accuracy st labels predicted for a sample exactly match true labels (harsh)
+        accurcay = metrics.accuracy_score(y_test, y_pred)  # set sample_weight to get weighted accuracy
+
+        all_metrics[i + 1] = accurcay
+
+        print('For iteration {}:'.format(i + 1))
+        print('best parameter is {}'.format(classifier.best_params_))
+        print('test accuracy is {}'.format(accurcay))
+        print("\n")
+        print(metrics.classification_report(y_test, y_pred, target_names=target_names))
+
+    return all_metrics
