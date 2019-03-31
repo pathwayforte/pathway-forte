@@ -2,24 +2,29 @@
 
 """Test merge gene set."""
 
+import logging
 import unittest
-
 from collections import Counter
+
 import pandas as pd
 
 from pathway_forte.mappings import load_compath_mapping_dfs, get_mapping_dict, check_gmt_files
 
-# Mappings linked with duplicate WikiPathways representation need to be skipped since they one pathway maps to
+logger = logging.getLogger(__name__)
+
+# Mappings linked with duplicate WikiPathways/KEGG representation need to be skipped since they one pathway maps to
 # multiple mappings
 BLACK_LIST = {
     'R-HSA-5683057', 'WP623', 'WP61', 'WP3845', 'WP366', 'R-HSA-9006936', 'R-HSA-2028269', 'WP75', 'WP3858',
-    'WP2586', 'WP2873', 'R-HSA-174403', 'WP100','WP4506', 'R-HSA-196819', 'WP4297', 'R-HSA-1430728'
+    'WP2586', 'WP2873', 'R-HSA-174403', 'WP100', 'WP4506', 'R-HSA-196819', 'WP4297', 'R-HSA-1430728', 'R-HSA-163210',
+    'R-HSA-1430728', 'hsa00190', 'hsa04010', 'WP382', 'WP422', 'hsa04350', 'WP560', 'hsa04390', 'hsa04392'
 }
 
 
 class TestMergeGmt(unittest.TestCase):
 
     def test_gmt_file(self):
+
         kegg_reactome_df, kegg_wikipathways_df, wikipathways_reactome_df, special_mappings_df = load_compath_mapping_dfs()
 
         equivalent_mappings_dict = get_mapping_dict(
@@ -55,6 +60,7 @@ class TestMergeGmt(unittest.TestCase):
             copy_pathway = pathways
 
             for index, (resource, pathway) in enumerate(pathways):
+                # Skip multiduplicate pathways
                 if pathway in BLACK_LIST:
                     continue
 
@@ -71,10 +77,6 @@ class TestMergeGmt(unittest.TestCase):
             for resource, pathway in pathways
         ])
 
-        print('Pathways appearing more than once {}'.format(
-            [
-                pathway
-                for pathway, count in counter.items()
-                if count > 1
-            ]
-        ))
+        # All pathways should be only present once. Check for duplicates
+        for pathway, count in counter.items():
+            self.assertEqual(count, 1)
