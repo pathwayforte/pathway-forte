@@ -25,5 +25,5 @@ Installation
 .. code-block:: sh
 
     $ git clone https://github.com/pathwayforte/pathway-forte.git
-    $ cd pathway_forte
+    $ cd pathway-forte
     $ python3 -m pip install -e .
