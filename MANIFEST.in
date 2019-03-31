@@ -6,11 +6,11 @@ global-exclude *.py[cod] __pycache__ *.so *.dylib .DS_Store *.gpickle
 exclude .bumpversion.cfg
 exclude data
 
-recursive-exclude data *.gmt
-recursive-exclude data *.rst
-recursive-exclude docs *.py
-recursive-exclude docs *.rst
-recursive-exclude docs Makefile
+recursive-include data *.gmt
+recursive-include data *.rst
+recursive-include docs *.py
+recursive-include docs *.rst
+recursive-include docs Makefile
 
 include *.rst *.txt *.yml LICENSE tox.ini .flake8 doc8.ini .coveragerc
 
