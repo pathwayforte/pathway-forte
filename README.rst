@@ -8,8 +8,7 @@ Structure
 
 - src: Source code of the Python package
 - docs: Python package Documentation
-- data: Directories containing gmt files, TCGA gene expression data, enrichment scores and test data used in the paper
-(in case proprocessing has been already conducted).
+- data: Directories containing gmt files, TCGA gene expression data, enrichment scores and test data used in the paper (in case proprocessing has been already conducted).
 - R: Scripts to download and handle TCGA gene expression data
 
 
