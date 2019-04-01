@@ -108,7 +108,8 @@ def train_multiclass_svm(X, y, inner_cv, outer_cv, chain_pca=False, explained_va
     :param explained_variance: amount of variance retained
     :return:
     """
-    all_metrics = {}
+    all_accuracy_metrics = {}
+    all_f1_metrics = {}
 
     target_names = ['Class 0', 'Class 1', 'Class 2', 'Class 3']
 
@@ -141,13 +142,15 @@ def train_multiclass_svm(X, y, inner_cv, outer_cv, chain_pca=False, explained_va
 
         # Get the subset accuracy st labels predicted for a sample exactly match true labels (harsh)
         accurcay = metrics.accuracy_score(y_test, y_pred)  # set sample_weight to get weighted accuracy
-
-        all_metrics[i + 1] = accurcay
+        f1_score = metrics.f1_score(y_test, y_pred, average= "weighted")
+        all_accuracy_metrics[i + 1] = accurcay
+        all_f1_metrics[i + 1] = f1_score
 
         print('For iteration {}:'.format(i + 1))
         print('best parameter is {}'.format(classifier.best_params_))
         print('test accuracy is {}'.format(accurcay))
+        print('f1 score is {}'.format(f1_score))
         print("\n")
         print(metrics.classification_report(y_test, y_pred, target_names=target_names))
 
-    return all_metrics
+    return all_accuracy_metrics, all_f1_metrics
