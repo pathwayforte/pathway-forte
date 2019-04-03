@@ -268,7 +268,7 @@ def run_survival_on_dataset(
         # Normal convention for ssGSEA files:
         # -> <database>__<cancer_dataset>.tsv
         else:
-            pathway_resource, cancer_data_set = ssgsea_file.split('_')
+            cancer_data_set, pathway_resource = ssgsea_file.split('_')
 
             pathway_resource = pathway_resource.split('/')[-1]
 
