@@ -217,7 +217,7 @@ def run_survival_all_datasets(
         # If it is one of the msig file, a different file name coding applies for the ssGSEA files
         # -> (<database>_<msig>_<cancer_dataset>.tsv)
         if 'msig' in file:
-            file_name = file.strip('.tsv').split('_')
+            file_name = file[:-4].split('_') # Remove '.tsv' and split by underscore
             pathway_resource = '{}_{}'.format(file_name[0], file_name[1])
             cancer_data_set = file_name[2]
 
