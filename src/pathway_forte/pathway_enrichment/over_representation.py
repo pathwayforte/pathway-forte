@@ -42,7 +42,7 @@ def perform_hypergeometric_test(
     :rtype: dict[str,dict[str,dict]]
     :return: manager_pathways_dict with p value info
     """
-    manager_p_values = dict()
+    pathway_to_p_value = dict()
     results = dict()
 
     for pathway_id, pathway_gene_set in pathway_dict.items():
@@ -52,10 +52,10 @@ def perform_hypergeometric_test(
         # Calculate fisher test
         oddsratio, pvalue = fisher_exact(test_table, alternative='greater')
 
-        manager_p_values[pathway_id] = pvalue
+        pathway_to_p_value[pathway_id] = pvalue
 
     # Split the dictionary into names_id tuples and p values to keep the same order
-    manager_pathway_id, p_values = zip(*manager_p_values.items())
+    manager_pathway_id, p_values = zip(*pathway_to_p_value.items())
     correction_test = multipletests(p_values, method='fdr_bh')
 
     q_values = correction_test[1]
