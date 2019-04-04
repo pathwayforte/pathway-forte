@@ -1,7 +1,7 @@
 PathwayForte |build| |docs|
 ===========================
-A Python package for comparing the effect of pathway database choice in functional enrichment and classification
-methods.
+A Python package for comparing the effects of the pathway database of choice on functional enrichment and classification
+tasks.
 
 Installation
 ------------
