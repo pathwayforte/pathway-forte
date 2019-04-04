@@ -99,6 +99,31 @@ def prepare_ssgsea_data_for_survival_analysis(enrichment_score_path, clinical_da
     return filtered_ssgsea_df, event_time_struc_array
 
 
+def survival_data_to_csv(clinical_data, dataset):
+    """Get survival data from clinical data file."""
+
+    # Read clinical meta data file
+    clinical_data_df = pd.read_csv(clinical_data, sep='\t')
+
+    # Get relevant columns for survival information
+    clinical_data_df = clinical_data_df[
+        ['Days to Last Followup', 'Overall Survival (Months)', 'Overall Survival Status']]
+
+    # Convert survival months to days
+    clinical_data_df['Survival (Days)'] = round(clinical_data_df['Overall Survival (Months)'] * 30.42, 2)
+
+    # If patient is living, replace their overall survival time in months to NaN
+    clinical_data_df.loc[clinical_data_df['Overall Survival Status'] == 'LIVING', 'Overall Survival (Months)'] = np.NaN
+
+    # Rearrange columns
+    cols = clinical_data_df.columns.tolist()
+    cols = ['Days to Last Followup', 'Overall Survival (Months)', 'Survival (Days)', 'Overall Survival Status']
+
+    clinical_data_df = clinical_data_df[cols]
+
+    clinical_data_df.to_csv('{}_survival_data.tsv'.format(dataset), sep='\t')
+
+
 def pca_chaining(X_train, X_test, explained_variance):
     """Chain PCA with estimator.
 
@@ -146,7 +171,6 @@ def train_survival_model(
     iterator = tqdm(kf.split(x_features, y_labels))
 
     for i, (train_index, test_index) in enumerate(iterator):
-
         X_train = x_features.iloc[train_index]
 
         X_test = x_features.iloc[test_index]
@@ -194,7 +218,7 @@ def train_survival_model(
     #     for iter_result in concordance_scores
     # ])
 
-    #print('Avg C-Index {}'.format(avg_c_index))
+    # print('Avg C-Index {}'.format(avg_c_index))
     print(concordance_scores)
     # return avg_c_index, concordance_scores
     return concordance_scores
@@ -217,7 +241,7 @@ def run_survival_all_datasets(
         # If it is one of the msig file, a different file name coding applies for the ssGSEA files
         # -> (<database>_<msig>_<cancer_dataset>.tsv)
         if 'msig' in file:
-            file_name = file[:-4].split('_') # Remove '.tsv' and split by underscore
+            file_name = file[:-4].split('_')  # Remove '.tsv' and split by underscore
             pathway_resource = '{}_{}'.format(file_name[0], file_name[1])
             cancer_data_set = file_name[2]
 
@@ -259,43 +283,41 @@ def run_survival_on_dataset(
         hyperparameter_space,
         chain_pca
 ):
+    if 'msig' in ssgsea_file:
+        file_name = ssgsea_file.strip('.tsv').split('_')
+        pathway_resource = '{}_{}'.format(file_name[0], file_name[1])
+        cancer_data_set = file_name[2]
 
-        if 'msig' in ssgsea_file:
-            file_name = ssgsea_file.strip('.tsv').split('_')
-            pathway_resource = '{}_{}'.format(file_name[0], file_name[1])
-            cancer_data_set = file_name[2]
+    # Normal convention for ssGSEA files:
+    # -> <database>__<cancer_dataset>.tsv
+    else:
+        pathway_resource, cancer_data_set = ssgsea_file.split('_')
 
-        # Normal convention for ssGSEA files:
-        # -> <database>__<cancer_dataset>.tsv
-        else:
-            pathway_resource, cancer_data_set = ssgsea_file.split('_')
+        pathway_resource = pathway_resource.split('/')[-1]
 
-            pathway_resource = pathway_resource.split('/')[-1]
+        cancer_data_set = cancer_data_set.replace('.tsv', '')
 
-            cancer_data_set = cancer_data_set.replace('.tsv', '')
+        # Check that is a valid file
+        if pathway_resource not in PATHWAY_RESOURCES or cancer_data_set not in CANCER_DATA_SETS:
+            logger.warning('Skipping file {}'.format(ssgsea_file))
 
-            # Check that is a valid file
-            if pathway_resource not in PATHWAY_RESOURCES or cancer_data_set not in CANCER_DATA_SETS:
-                logger.warning('Skipping file {}'.format(ssgsea_file))
+    logger.info('{}-{}'.format(cancer_data_set, pathway_resource))
 
+    # Prepare data
+    ssgsea_df, event_time_array = prepare_ssgsea_data_for_survival_analysis(
+        ssgsea_file,
+        CLINICAL_DATA.format(cancer_data_set, cancer_data_set),
+        get_num_samples(NORMAL_EXPRESSION_SAMPLES.format(cancer_data_set))
+    )
 
-        logger.info('{}-{}'.format(cancer_data_set, pathway_resource))
-
-        # Prepare data
-        ssgsea_df, event_time_array = prepare_ssgsea_data_for_survival_analysis(
-            ssgsea_file,
-            CLINICAL_DATA.format(cancer_data_set, cancer_data_set),
-            get_num_samples(NORMAL_EXPRESSION_SAMPLES.format(cancer_data_set))
-        )
-
-        # Train model and store results to export it as a pickle
-        return train_survival_model(
-            ssgsea_df,
-            event_time_array,
-            outer_cv_splits,
-            inner_cv_splits,
-            hyperparameter_space,
-        )
+    # Train model and store results to export it as a pickle
+    return train_survival_model(
+        ssgsea_df,
+        event_time_array,
+        outer_cv_splits,
+        inner_cv_splits,
+        hyperparameter_space,
+    )
 
 
 def iterator_input_folders(
