@@ -1,15 +1,19 @@
 # -*- coding: utf-8 -*-
 
-"""This module runs GSEA on the TCGA dataset and contains functions to generate statistics."""
+"""This module contain the functional class methods implemented in PathwayForte. For now, GSEA and ssGSEA"""
 
 import itertools as itt
 
 import gseapy
 import pandas as pd
-from pathway_forte.mappings import get_mapping_dict, load_compath_mapping_dfs
-from pathway_forte.utils import get_num_samples
+from scipy.stats import fisher_exact
+from statsmodels.stats.multitest import multipletests
 
-from .constants import *
+from pathway_forte.constants import *
+from pathway_forte.constants import SSGSEA
+from pathway_forte.mappings import get_mapping_dict, load_compath_mapping_dfs
+from pathway_forte.pathway_enrichment.over_representation import _prepare_hypergeometric_test, log
+from pathway_forte.utils import get_num_samples
 
 
 def create_cls_file(gene_expression_file, normal_sample_file, tumor_sample_file, data):
@@ -486,3 +490,67 @@ def check_pathway_ids(source_df, source, merged_pathways_list, mappings_dict):
         pathways_with_matches.append(check_merged_pathways_for_matches(merged_pathways_list, pathway_id))
 
     return pathways_with_matches
+
+
+def perform_hypergeometric_test(genes_to_test, pathway_dict, gene_universe, apply_threshold=False, threshold=0.01):
+    """Perform hypergeometric tests.
+
+    :param set[str] genes_to_test: gene set to test against pathway
+    :param dict[str,set] pathway_dict: manager to pathways
+    :param int gene_universe: number of HGNC symbols
+    :param Optional[bool] apply_threshold: return only significant pathways
+    :param Optional[float] threshold: significance threshold (by default 0.05)
+    :rtype: dict[str,dict[str,dict]]
+    :return: manager_pathways_dict with p value info
+    """
+    manager_p_values = dict()
+    results = dict()
+
+    for pathway_id, pathway_gene_set in pathway_dict.items():
+        # Prepare the test table to conduct the fisher test
+        test_table = _prepare_hypergeometric_test(genes_to_test, pathway_gene_set, gene_universe)
+
+        # Calculate fisher test
+        oddsratio, pvalue = fisher_exact(test_table, alternative='greater')
+
+        manager_p_values[pathway_id] = pvalue
+
+    # Split the dictionary into names_id tuples and p values to keep the same order
+    manager_pathway_id, p_values = zip(*manager_p_values.items())
+    correction_test = multipletests(p_values, method='fdr_bh')
+
+    q_values = correction_test[1]
+
+    # Update original dict with p value corrections
+    for i, pathway_id in enumerate(manager_pathway_id):
+
+        q_value = round(q_values[i], 4)
+        results[pathway_id] = q_value
+
+        # [Optional] Delete the pathway if does not pass the threshold
+        if apply_threshold and q_value > threshold:
+            del results[pathway_id][pathway_id]
+
+    return results
+
+
+def run_ssgsea(filtered_expression_data, gene_set, output_dir=SSGSEA, processes=1):
+    """Run single sample GSEA (ssGSEA) on filtered gene expression data set.
+
+    :param pandas.core.frame.DataFrame expression_data: filtered gene expression values for samples
+    :param str gmt_file: .gmt file containing gene sets
+    :param output_dir: output directory
+    :return: ssGSEA results in respective directory
+    """
+    ssgsea_result = gseapy.ssgsea(
+        data=filtered_expression_data,
+        gene_sets=gene_set,
+        outdir=output_dir,  # do not write output to disk
+        max_size=3000,
+        sample_norm_method='rank',  # choose 'custom' for your own rank list
+        permutation_num=0,  # skip permutation procedure, because you don't need it
+        no_plot=True,  # skip plotting to speed up
+        processes=processes, format='png'
+    )
+    log.info('Done with ssGSEA')
+    return ssgsea_result

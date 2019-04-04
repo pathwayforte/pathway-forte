@@ -1,15 +1,33 @@
 # -*- coding: utf-8 -*-
 
-"""This module runs ssGSEA on the TCGA dataset."""
-
+"""This module contains the functions to run Over Representation Analysis (ORA)."""
 import itertools as itt
 import logging
 
 import gseapy
-
-from .constants import SSGSEA
+import numpy as np
 
 log = logging.getLogger(__name__)
+
+
+def _prepare_hypergeometric_test(query_gene_set, pathway_gene_set, gene_universe):
+    """Prepare the matrix for hypergeometric test calculations.
+
+    :param set[str] query_gene_set: gene set to test against pathway
+    :param set[str] pathway_gene_set: pathway gene set
+    :param int gene_universe: number of HGNC symbols
+    :rtype: numpy.ndarray
+    :return: 2x2 matrix
+    """
+    return np.array(
+        [[len(query_gene_set.intersection(pathway_gene_set)),
+          len(query_gene_set.difference(pathway_gene_set))
+          ],
+         [len(pathway_gene_set.difference(query_gene_set)),
+          gene_universe - len(pathway_gene_set.union(query_gene_set))
+          ]
+         ]
+    )
 
 
 def filter_gene_exp_data(expression_data, gmt_file):
@@ -45,25 +63,3 @@ def filter_gene_exp_data(expression_data, gmt_file):
         f'of the gene expression data is mapped to the pathway datasets')
 
     return filtered_expression_data.drop(genes_to_remove)
-
-
-def run_ssgsea(filtered_expression_data, gene_set, output_dir=SSGSEA, processes=1):
-    """Run single sample GSEA (ssGSEA) on filtered gene expression data set.
-
-    :param pandas.core.frame.DataFrame expression_data: filtered gene expression values for samples
-    :param str gmt_file: .gmt file containing gene sets
-    :param output_dir: output directory
-    :return: ssGSEA results in respective directory
-    """
-    ssgsea_result = gseapy.ssgsea(
-        data=filtered_expression_data,
-        gene_sets=gene_set,
-        outdir=output_dir,  # do not write output to disk
-        max_size=3000,
-        sample_norm_method='rank',  # choose 'custom' for your own rank list
-        permutation_num=0,  # skip permutation procedure, because you don't need it
-        no_plot=True,  # skip plotting to speed up
-        processes=processes, format='png'
-    )
-    log.info('Done with ssGSEA')
-    return ssgsea_result
