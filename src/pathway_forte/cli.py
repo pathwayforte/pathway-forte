@@ -8,9 +8,9 @@ import warnings
 import click
 
 from pathway_forte.export_genesets_to_gmt import *
+from pathway_forte.mappings import *
 from pathway_forte.pathway_enrichment.functional_class import create_cls_file, run_gsea, run_ssgsea, \
     filter_gene_exp_data
-from pathway_forte.mappings import *
 from pathway_forte.prediction.class_prediction import get_parameter_values, ssgsea_nes_to_df, train_elastic_net_model
 from pathway_forte.prediction.survival_analysis import run_survival_all_datasets
 from pathway_forte.utils import plot_aucs
@@ -322,6 +322,42 @@ def train_elastic_net(data, outer_cv, inner_cv, max_iterations, turn_off_warning
     plot_aucs(aucs, data, 'MERGE', CLASSIFIER_RESULTS)
 
     click.echo("MERGE_SSGSEA_NES AUCS: {}".format(aucs))
+
+
+@main.command()
+@click.option('-s', '--ssgsea-scores-path', type=click.Path, required=True,
+              help='ssGSEA scores file')
+@click.option('-p', '--phenotypes-path', type=click.Path, required=True, help='Path to the phenotypes file')
+@click.option('-ocv', '--outer-cv', type=int, default=10, show_default=True, help='Number of k splits in outer cv')
+@click.option('-icv', '--inner-cv', type=int, default=10, show_default=True, help='Number of k splits in inner cv')
+@click.option(
+    '-i', '--max_iterations', type=int, default=1000, show_default=True,
+    help='Number of max iterations to converge'
+)
+@click.option('--turn-off-warnings', is_flag=True, help='Turns off warnings')
+def test_stability_prediction(ssgsea_scores_path, phenotypes_path, outer_cv, inner_cv, max_iterations,
+                              turn_off_warnings):
+    """Train elastic net."""
+    make_classifier_results_directory()
+    click.echo(
+        'Training Elastic Net via nested CV for {} dataset with {} (phenotypes: {}) outer loops and {} inner loops'.format(
+            outer_cv,
+            ssgsea_scores_path,
+            phenotypes_path,
+            inner_cv,
+
+        ))
+
+    if turn_off_warnings:
+        click.echo("Warnings are now turned off")
+        warnings.simplefilter('ignore')
+
+    parameter_list = get_parameter_values()
+    click.echo('Hyperparameter list {}'.format(parameter_list))
+
+    x, y = ssgsea_nes_to_df(ssgsea_scores_path, phenotypes_path)
+
+    results = train_elastic_net_model(x, y, outer_cv, inner_cv, parameter_list, max_iter=max_iterations)
 
 
 @main.command()

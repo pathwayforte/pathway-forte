@@ -97,7 +97,7 @@ def train_elastic_net_model(
         max_iter=1000,
         export=True
 ):
-    """Train elastic net model within a defined hyperparameter space via a nested cross validation for TCGA
+    """Train elastic net model within a defined hyperparameter space via a nested cross validation given
     expression data.
 
     :param numpy.array x_features: 2D matrix of pathway scores and samples
