@@ -95,6 +95,7 @@ def train_elastic_net_model(
         hyperparameter_space,
         model_name,
         max_iter=1000,
+        export=True
 ):
     """Train elastic net model within a defined hyperparameter space via a nested cross validation for TCGA
     expression data.
@@ -136,7 +137,8 @@ def train_elastic_net_model(
         log.info('Iteration {} AUC score:{}'.format(i, score))
 
         # Pickle to model
-        from joblib import dump
-        dump(glm_elastic, os.path.join(CLASSIFIER_RESULTS, '{}_{}.joblib'.format(model_name, i)))
+        if export:
+            from joblib import dump
+            dump(glm_elastic, os.path.join(CLASSIFIER_RESULTS, '{}_{}.joblib'.format(model_name, i)))
 
     return auc_scores
