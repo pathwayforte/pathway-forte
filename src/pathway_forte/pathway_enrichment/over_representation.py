@@ -35,7 +35,7 @@ def perform_hypergeometric_test(
     """Perform hypergeometric tests.
 
     :param set[str] genes_to_test: gene set to test against pathway
-    :param dict[str,set] pathway_dict: manager to pathways
+    :param dict[str,set] pathway_dict: pathway name to gene set
     :param int gene_universe: number of HGNC symbols
     :param Optional[bool] apply_threshold: return only significant pathways
     :param Optional[float] threshold: significance threshold (by default 0.05)
