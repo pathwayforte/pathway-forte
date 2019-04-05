@@ -2,19 +2,19 @@
 
 """Elastic Net regression with nested cross validation module."""
 
-import logging
-import os
-
 import gseapy
+import logging
+import numpy as np
+import os
 import pandas as pd
+from pathway_forte.constants import CLASSIFIER_RESULTS
 from sklearn.linear_model import ElasticNetCV
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import StratifiedKFold
 from tqdm import tqdm
 
-from pathway_forte.constants import CLASSIFIER_RESULTS
-
 log = logging.getLogger(__name__)
+np.random.seed(10)
 
 __all__ = [
     'ssgsea_nes_to_df',
@@ -23,17 +23,27 @@ __all__ = [
 ]
 
 
-def ssgsea_nes_to_df(ssgsea_scores_csv, classes_file):
+def ssgsea_nes_to_df(ssgsea_scores_csv, classes_file, removed_random=None):
     """Create dataFrame of Normalized Enrichment Scores (NES) from ssGSEA of TCGA expression data.
 
     :param ssgsea_scores_csv: Text file containing normalized ES for pathways from each sample
     :param test_size: Default test size is 0.25
+    :param Optional[int] removed_random: Remove percentage of df
     :return:
     :rtype:
     """
     # Read tsv file using the first row as the header.
     # Important! gseapy.samples.normalized.es.txt contains a descriptive header which here is omitted
     enrichment_score = pd.read_csv(ssgsea_scores_csv, sep='\t', header=0)
+
+    if removed_random:
+        previous_df_shape = enrichment_score.shape
+        drop_indices = np.random.choice(enrichment_score.index, removed_random, replace=False)
+        enrichment_score = enrichment_score.drop(drop_indices)
+
+        # Check size of df
+        assert previous_df_shape[0] == enrichment_score.shape[0] + len(drop_indices), 'Problem removing random rows'
+        assert previous_df_shape[1] == enrichment_score.shape[1], 'Columns should have not changed after removing rows'
 
     # Transpose dataFrame to arrange columns as pathways and rows as genes
     enrichment_score_df = enrichment_score.transpose()

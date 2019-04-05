@@ -4,14 +4,14 @@
 
 from collections import defaultdict
 
-from pathway_forte.prediction.class_prediction import train_elastic_net_model
+from pathway_forte.prediction.class_prediction import train_elastic_net_model, ssgsea_nes_to_df
 
 
 def run_stability_iterations(
         percentage_list,
         number_runs,
-        x_features,
-        y_labels,
+        ssgsea_scores_path,
+        phenotypes_path,
         outer_cv_splits,
         inner_cv_splits,
         hyperparameter_space,
@@ -23,8 +23,8 @@ def run_stability_iterations(
 
     :param list[int] percentage_list: list with the percentages of pathways to be removed in every iteration
     :param int number_runs: number of runs in each iteration
-    :param numpy.array x_features: 2D matrix of pathway scores and samples
-    :param list y_labels: class labels of samples
+    :param numpy.array ssgsea_scores_path: 2D matrix of pathway scores and samples
+    :param list phenotypes_path: class labels of samples
     :param int outer_cv_splits: number of folds for cross validation split in outer loop
     :param int inner_cv_splits: number of folds for cross validation split in inner loop
     :param list hyperparameter_space: list of hyperparameters for l1 and l2 priors
@@ -39,6 +39,11 @@ def run_stability_iterations(
 
         # For each percentage try with multiple runs since every iteration the percentage will be random
         for i in range(0, number_runs):
+
+            remove_n = percentage / ...
+
+            x_features, y_labels = ssgsea_nes_to_df(ssgsea_scores_path, phenotypes_path, remove_random=remove_n)
+
             i_results = test_stability(
                 percentage,
                 x_features,

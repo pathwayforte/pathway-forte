@@ -349,15 +349,15 @@ def test_stability_prediction(ssgsea_scores_path, phenotypes_path, outer_cv, inn
         ))
 
     if turn_off_warnings:
-        click.echo("Warnings are now turned off")
+        click.echo("ssgsea_nes_to_dfWarnings are now turned off")
         warnings.simplefilter('ignore')
 
     parameter_list = get_parameter_values()
     click.echo('Hyperparameter list {}'.format(parameter_list))
 
-    x, y = ssgsea_nes_to_df(ssgsea_scores_path, phenotypes_path)
-
-    results = train_elastic_net_model(x, y, outer_cv, inner_cv, parameter_list, max_iter=max_iterations)
+    results = train_elastic_net_model(
+        ssgsea_scores_path, phenotypes_path, outer_cv, inner_cv, parameter_list, max_iter=max_iterations
+    )
 
 
 @main.command()
