@@ -68,6 +68,6 @@ def perform_hypergeometric_test(
 
         # [Optional] Delete the pathway if does not pass the threshold
         if apply_threshold and q_value > threshold:
-            del results[pathway_id][pathway_id]
+            del results[pathway_id]
 
     return results
