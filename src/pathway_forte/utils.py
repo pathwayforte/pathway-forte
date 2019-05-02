@@ -24,6 +24,12 @@ def plot_aucs(data, database, data_set, export_directory, shuffled=False):
 
 
 def get_num_samples(samples_file):
+    """Return the number of samples.
+
+    :param str samples_file: file path
+    :rtype: int
+    :return: number of samples
+    """
     with open(samples_file, 'r') as num_samples:
         sample_numbers = num_samples.read().replace('\n', '')
 
