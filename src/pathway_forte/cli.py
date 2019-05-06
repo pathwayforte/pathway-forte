@@ -6,6 +6,7 @@ import pickle
 import warnings
 
 import click
+from gseapy.parser import gsea_gmt_parser
 
 from pathway_forte.export_genesets_to_gmt import *
 from pathway_forte.mappings import *
@@ -14,6 +15,11 @@ from pathway_forte.pathway_enrichment.functional_class import (
     run_gsea,
     run_ssgsea,
     filter_gene_exp_data,
+)
+from pathway_forte.pathway_enrichment.over_representation import (
+    read_fold_change_df,
+    filter_fold_change_fd,
+    perform_hypergeometric_test
 )
 from pathway_forte.prediction.binary import get_parameter_values, ssgsea_nes_to_df, train_elastic_net_model
 from pathway_forte.prediction.multiclass import *
@@ -33,7 +39,7 @@ def main():
 
 @main.command()
 def datasets():
-    """List datasets."""
+    """List of Cancer Datasets."""
     click.echo("List of data sets used in the paper: {}".format(CANCER_DATA_SETS))
 
 
@@ -42,7 +48,7 @@ def datasets():
 
 @main.command()
 def export_gene_sets():
-    """Generate gene sets."""
+    """Generate Gene Sets using ComPath."""
     from bio2bel_kegg import Manager as KeggManager
     from bio2bel_reactome import Manager as ReactomeManager
     from bio2bel_wikipathways import Manager as WikipathwaysManager
@@ -87,14 +93,38 @@ def export_gene_sets():
 
 @main.group()
 def ora():
-    """ORA Analyses."""
+    """List of ORA Analyses."""
 
 
 @ora.command()
-@click.option('-s', '--fold-changes', type=click.Path(exists=True), required=True, help='ssGSEA scores file')
-@click.option('--turn-off-warnings', is_flag=True, help='Turns off warnings')
-def fisher(fold_changes, turn_off_warnings):
+@click.option('-d', '--genesets', type=click.Path(exists=True), required=False, help='Path to GMT file')
+@click.option('-s', '--fold-changes', type=click.Path(exists=True), required=False, help='Path to fold changes file')
+@click.option('--no-threshold', is_flag=True, help='Do not apply threshold')
+def fisher(genesets, fold_changes, no_threshold):
     """Performs fisher tests enrichment."""
+
+    # Reverse threshold boolean (if "--no-threshold" threshold=False, else threshold=True)
+    threshold = not no_threshold
+
+    if threshold:
+        click.echo('Filtering out q values > 0.01 according to fdr_bh')
+
+    fc_df = read_fold_change_df(fold_changes)
+
+    significant_genes = filter_fold_change_fd(fc_df)
+
+    click.echo(f'There are a total of {len(significant_genes)} significant genes.')
+
+    # Note that the parser filters out gene sets smaller than 3 and larger than 1000
+    gene_sets = gsea_gmt_parser(genesets)
+
+    enriched_pathways = perform_hypergeometric_test(
+        significant_genes,
+        gene_sets,
+        apply_threshold=threshold
+    )
+
+    click.echo(enriched_pathways)
 
 
 """FCS Analyses"""
@@ -270,7 +300,7 @@ def ssgsea(data):
 
 @main.group()
 def prediction():
-    """Prediction methods."""
+    """List of Prediction Methods."""
 
 
 @prediction.command()

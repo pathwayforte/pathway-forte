@@ -4,10 +4,31 @@
 import logging
 
 import numpy as np
+import pandas as pd
 from scipy.stats import fisher_exact
 from statsmodels.stats.multitest import multipletests
 
+from pathway_forte.constants import FC_COLUMNS, FOLD_CHANGE, P_VALUE, GENE_SYMBOL
+
 log = logging.getLogger(__name__)
+
+
+def read_fold_change_df(file):
+    """Read csv with gene names, fold changes and their pvalues."""
+    df = pd.read_csv(file)
+
+    # Check all columns are present
+    if any(column not in df for column in FC_COLUMNS):
+        raise ValueError(f'Any of the necessary columns: f{FC_COLUMNS} is not present. Please check.')
+
+    return df
+
+
+def filter_fold_change_fd(df):
+    """Return significantly differentially expressed genes in fold change df."""
+    filtered_df = df.query(f'({FOLD_CHANGE} <= -2 | {FOLD_CHANGE} >= 2) & {P_VALUE} <= 0.01')
+
+    return filtered_df[GENE_SYMBOL]
 
 
 def _prepare_hypergeometric_test(query_gene_set, pathway_gene_set, gene_universe):
@@ -31,7 +52,8 @@ def _prepare_hypergeometric_test(query_gene_set, pathway_gene_set, gene_universe
 
 
 def perform_hypergeometric_test(
-        genes_to_test, pathway_dict, gene_universe=42609, apply_threshold=False, threshold=0.01):
+        genes_to_test, pathway_dict, gene_universe=42609, apply_threshold=False, threshold=0.01
+):
     """Perform hypergeometric tests.
 
     :param set[str] genes_to_test: gene set to test against pathway

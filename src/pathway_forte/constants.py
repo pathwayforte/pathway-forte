@@ -192,3 +192,15 @@ GENESET_COLUMN_NAMES = {
     REACTOME: "Reactome Geneset",
     WIKIPATHWAYS: "WikiPathways Geneset",
 }
+
+"""Columns to read to perform ORA analysis."""
+
+GENE_SYMBOL = 'gene_symbol'
+FOLD_CHANGE = 'fold_change'
+P_VALUE = 'p_value'
+
+FC_COLUMNS = {
+    GENE_SYMBOL,
+    FOLD_CHANGE,
+    P_VALUE,
+}
