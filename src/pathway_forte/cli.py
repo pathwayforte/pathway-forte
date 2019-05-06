@@ -16,6 +16,7 @@ from pathway_forte.pathway_enrichment.functional_class import (
     filter_gene_exp_data,
 )
 from pathway_forte.prediction.binary import get_parameter_values, ssgsea_nes_to_df, train_elastic_net_model
+from pathway_forte.prediction.multiclass import *
 from pathway_forte.prediction.survival import run_survival_all_datasets
 from pathway_forte.utils import plot_aucs
 
@@ -363,6 +364,67 @@ def binary(data, outer_cv, inner_cv, max_iterations, turn_off_warnings):
 
 
 @prediction.command()
+@click.option('-d', '--data', type=str, required=True, help='Name of dataset')
+@click.option('-ocv', '--outer-cv', type=int, default=10, show_default=True, help='Number of k splits in outer cv')
+@click.option('-icv', '--inner-cv', type=int, default=10, show_default=True, help='Number of k splits in inner cv')
+@click.option('--turn-off-warnings', is_flag=True, help='Turns off warnings')
+def survival(data, outer_cv, inner_cv, turn_off_warnings):
+    """Train survival model."""
+    click.echo('Running survival analysis for {} with: {} outer CVs and {} inner CVS'.format(data, outer_cv, inner_cv))
+
+    parameter_list = {'l1_ratio': get_parameter_values()}
+    click.echo('Hyperparameter list {}'.format(parameter_list))
+
+    if turn_off_warnings:
+        click.echo("Warnings are now turned off")
+        warnings.simplefilter('ignore')
+
+    results = run_survival_all_datasets(os.path.join(SSGSEA, data), outer_cv, inner_cv, parameter_list)
+
+    click.echo(results)
+
+    results_path = os.path.join(CLASSIFIER_RESULTS, 'survival_results_{}.pickle'.format(data))
+
+    with open(results_path, 'wb') as file:
+        pickle.dump(results, file)
+
+    click.echo('Done with survival analysis. Results are exported in {}'.format(results_path))
+
+
+@prediction.command()
+@click.option('-d', '--ssgsea', type=click.Path(exists=True), required=True, help='Path to ssGSEA file')
+@click.option('-s', '--subtypes', type=click.Path(exists=True), required=True, help='Path to the subtypes file')
+@click.option('-ocv', '--outer-cv', type=int, default=10, show_default=True, help='Number of k splits in outer cv')
+@click.option('-icv', '--inner-cv', type=int, default=10, show_default=True, help='Number of k splits in inner cv')
+@click.option('--turn-off-warnings', is_flag=True, help='Turns off warnings')
+def subtype(ssgsea, subtypes, outer_cv, inner_cv, turn_off_warnings):
+    """Train subtype analysis."""
+    click.echo('Running subtype analysis for {} with: {} outer CVs and {} inner CVS'.format(ssgsea, outer_cv, inner_cv))
+
+    if turn_off_warnings:
+        click.echo("Warnings are now turned off")
+        warnings.simplefilter('ignore')
+
+    patient_ids = get_sample_ids_with_cancer_subtypes(subtypes)
+    brca_subtypes_df = pd.read_csv(subtypes, sep='\t')
+
+    enrichment_score_df = stabilize_ssgsea_scores_df(ssgsea)
+    pathway_features = match_samples(enrichment_score_df, patient_ids)
+    class_labels = get_class_labels(pathway_features, brca_subtypes_df)
+
+    all_metrics = train_multiclass_svm(
+        pathway_features,
+        class_labels,
+        inner_cv=5,
+        outer_cv=5,
+        chain_pca=False,
+        explained_variance=0.95
+    )
+
+    click.echo(all_metrics)
+
+
+@prediction.command()
 @click.option('-s', '--ssgsea-scores-path', type=click.Path(exists=True), required=True,
               help='ssGSEA scores file')
 @click.option('-p', '--phenotypes-path', type=click.Path(exists=True), required=True,
@@ -398,30 +460,4 @@ def test_stability_prediction(ssgsea_scores_path, phenotypes_path, outer_cv, inn
         ssgsea_scores_path, phenotypes_path, outer_cv, inner_cv, parameter_list, 'elastic_net', max_iter=max_iterations
     )
 
-
-@prediction.command()
-@click.option('-d', '--data', type=str, required=True, help='Name of dataset')
-@click.option('-ocv', '--outer-cv', type=int, default=10, show_default=True, help='Number of k splits in outer cv')
-@click.option('-icv', '--inner-cv', type=int, default=10, show_default=True, help='Number of k splits in inner cv')
-@click.option('--turn-off-warnings', is_flag=True, help='Turns off warnings')
-def survival(data, outer_cv, inner_cv, turn_off_warnings):
-    """Train survival model."""
-    click.echo('Running survival analysis for {} with: {} outer CVs and {} inner CVS'.format(data, outer_cv, inner_cv))
-
-    parameter_list = {'l1_ratio': get_parameter_values()}
-    click.echo('Hyperparameter list {}'.format(parameter_list))
-
-    if turn_off_warnings:
-        click.echo("Warnings are now turned off")
-        warnings.simplefilter('ignore')
-
-    results = run_survival_all_datasets(os.path.join(SSGSEA, data), outer_cv, inner_cv, parameter_list)
-
     click.echo(results)
-
-    results_path = os.path.join(CLASSIFIER_RESULTS, 'survival_results_{}.pickle'.format(data))
-
-    with open(results_path, 'wb') as file:
-        pickle.dump(results, file)
-
-    click.echo('Done with survival analysis. Results are exported in {}'.format(results_path))
