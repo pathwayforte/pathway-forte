@@ -4,7 +4,7 @@
 
 from collections import defaultdict
 
-from pathway_forte.prediction.class_prediction import train_elastic_net_model, ssgsea_nes_to_df
+from pathway_forte.prediction.binary import train_elastic_net_model, ssgsea_nes_to_df
 
 
 def run_stability_iterations(
@@ -39,7 +39,6 @@ def run_stability_iterations(
 
         # For each percentage try with multiple runs since every iteration the percentage will be random
         for i in range(0, number_runs):
-
             remove_n = percentage / ...
 
             x_features, y_labels = ssgsea_nes_to_df(ssgsea_scores_path, phenotypes_path, remove_random=remove_n)

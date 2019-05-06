@@ -9,10 +9,14 @@ import click
 
 from pathway_forte.export_genesets_to_gmt import *
 from pathway_forte.mappings import *
-from pathway_forte.pathway_enrichment.functional_class import create_cls_file, run_gsea, run_ssgsea, \
-    filter_gene_exp_data
-from pathway_forte.prediction.class_prediction import get_parameter_values, ssgsea_nes_to_df, train_elastic_net_model
-from pathway_forte.prediction.survival_analysis import run_survival_all_datasets
+from pathway_forte.pathway_enrichment.functional_class import (
+    create_cls_file,
+    run_gsea,
+    run_ssgsea,
+    filter_gene_exp_data,
+)
+from pathway_forte.prediction.binary import get_parameter_values, ssgsea_nes_to_df, train_elastic_net_model
+from pathway_forte.prediction.survival import run_survival_all_datasets
 from pathway_forte.utils import plot_aucs
 
 logger = logging.getLogger(__name__)

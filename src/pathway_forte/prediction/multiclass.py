@@ -142,7 +142,7 @@ def train_multiclass_svm(X, y, inner_cv, outer_cv, chain_pca=False, explained_va
 
         # Get the subset accuracy st labels predicted for a sample exactly match true labels (harsh)
         accurcay = metrics.accuracy_score(y_test, y_pred)  # set sample_weight to get weighted accuracy
-        f1_score = metrics.f1_score(y_test, y_pred, average= "weighted")
+        f1_score = metrics.f1_score(y_test, y_pred, average="weighted")
         all_accuracy_metrics[i + 1] = accurcay
         all_f1_metrics[i + 1] = f1_score
 

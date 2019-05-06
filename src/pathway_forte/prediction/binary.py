@@ -19,7 +19,7 @@ np.random.seed(10)
 __all__ = [
     'ssgsea_nes_to_df',
     'get_parameter_values',
-    'train_elastic_net_model'
+    'train_elastic_net_model',
 ]
 
 
