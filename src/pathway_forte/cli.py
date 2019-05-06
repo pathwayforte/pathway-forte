@@ -32,6 +32,9 @@ def datasets():
     click.echo("List of data sets used in the paper: {}".format(CANCER_DATA_SETS))
 
 
+"""Export GMT Files"""
+
+
 @main.command()
 def export_gene_sets():
     """Generate gene sets."""
@@ -74,9 +77,84 @@ def export_gene_sets():
     click.echo('Done creating files')
 
 
-@main.command()
+"""ORA Analyses"""
+
+
+@main.group()
+def ora():
+    """ORA Analyses."""
+
+
+@ora.command()
+@click.option('-s', '--fold-changes', type=click.Path(exists=True), required=True, help='ssGSEA scores file')
+@click.option('--turn-off-warnings', is_flag=True, help='Turns off warnings')
+def fisher(fold_changes, turn_off_warnings):
+    """Performs fisher tests enrichment."""
+
+
+"""FCS Analyses"""
+
+
+@main.group()
+def fcs():
+    """List of FCS Analyses."""
+
+
+@fcs.command()
 @click.option('-d', '--data', type=click.Choice(CANCER_DATA_SETS), required=True, help='Name of dataset')
-def alternative_gene_sets(data):
+@click.option('-p', '--permutations', type=int, default=100, show_default=True, help='Number of permutations')
+def gsea(data, permutations):
+    """Run GSEA on TCGA data."""
+    click.echo('Running GSEA for the {} dataset'.format(data))
+
+    make_gsea_export_directories()
+
+    gene_exp = pd.read_csv(EXPRESSION_MATRIX.format(data), sep='\t')
+    num_normal_samples = NORMAL_EXPRESSION_SAMPLES.format(data)
+    num_tumor_samples = TUMOR_EXPRESSION_SAMPLES.format(data)
+
+    kegg_gene_set, reactome_gene_set, wikipathways_gene_set, merge_gene_set = check_gmt_files()
+
+    if not os.path.isfile(PHENOTYPE_CLASSES.format(data)):
+        logger.info('Creating cls file')
+        create_cls_file(gene_exp, num_normal_samples, num_tumor_samples, data)
+
+    PHENOTYPE = PHENOTYPE_CLASSES.format(data)
+
+    logger.info('Running KEGG')
+    kegg_gsea_results = run_gsea(
+        gene_exp, kegg_gene_set, PHENOTYPE, permutations=permutations, output_dir=KEGG_GSEA
+    )
+
+    kegg_gsea_results.res2d.to_csv(KEGG_GSEA_TSV.format(data, date_today), sep='\t')
+
+    logger.info('Running Reactome')
+    reactome_gsea_results = run_gsea(
+        gene_exp, reactome_gene_set, PHENOTYPE, permutations=permutations, output_dir=REACTOME_GSEA
+    )
+
+    reactome_gsea_results.res2d.to_csv(REACTOME_GSEA_TSV.format(data, date_today), sep='\t')
+
+    logger.info('Running WikiPathways')
+    wikipathways_gsea_results = run_gsea(
+        gene_exp, wikipathways_gene_set, PHENOTYPE, permutations=permutations, output_dir=WIKIPATHWAYS_GSEA
+    )
+
+    wikipathways_gsea_results.res2d.to_csv(WIKIPATHWAYS_GSEA_TSV.format(data, date_today), sep='\t')
+
+    logger.info('Running MergeDataset')
+    merge_gsea_results = run_gsea(
+        gene_exp, merge_gene_set, PHENOTYPE, permutations=permutations, output_dir=MERGE_GSEA
+    )
+
+    merge_gsea_results.res2d.to_csv(MERGE_GSEA_TSV.format(data, date_today), sep='\t')
+
+    logger.info('Done with GSEA analysis')
+
+
+@fcs.command()
+@click.option('-d', '--data', type=click.Choice(CANCER_DATA_SETS), required=True, help='Name of dataset')
+def gsea_msig(data):
     """Run GSEA using MSigDB gene sets."""
     click.echo('Running GSEA for the {} dataset'.format(data))
     make_gsea_export_directories()
@@ -141,61 +219,9 @@ def alternative_gene_sets(data):
     conca_merge_ssgsea_results.res2d.to_csv(CONCATENATED_MERGE_GSEA_TSV.format(data, date_today), sep='\t')
 
 
-@main.command()
+@fcs.command()
 @click.option('-d', '--data', type=click.Choice(CANCER_DATA_SETS), required=True, help='Name of dataset')
-@click.option('-p', '--permutations', type=int, default=100, show_default=True, help='Number of permutations')
-def gsea_analysis(data, permutations):
-    """Run GSEA on TCGA data."""
-    click.echo('Running GSEA for the {} dataset'.format(data))
-
-    make_gsea_export_directories()
-
-    gene_exp = pd.read_csv(EXPRESSION_MATRIX.format(data), sep='\t')
-    num_normal_samples = NORMAL_EXPRESSION_SAMPLES.format(data)
-    num_tumor_samples = TUMOR_EXPRESSION_SAMPLES.format(data)
-
-    kegg_gene_set, reactome_gene_set, wikipathways_gene_set, merge_gene_set = check_gmt_files()
-
-    if not os.path.isfile(PHENOTYPE_CLASSES.format(data)):
-        logger.info('Creating cls file')
-        create_cls_file(gene_exp, num_normal_samples, num_tumor_samples, data)
-
-    PHENOTYPE = PHENOTYPE_CLASSES.format(data)
-
-    logger.info('Running KEGG')
-    kegg_gsea_results = run_gsea(
-        gene_exp, kegg_gene_set, PHENOTYPE, permutations=permutations, output_dir=KEGG_GSEA
-    )
-
-    kegg_gsea_results.res2d.to_csv(KEGG_GSEA_TSV.format(data, date_today), sep='\t')
-
-    logger.info('Running Reactome')
-    reactome_gsea_results = run_gsea(
-        gene_exp, reactome_gene_set, PHENOTYPE, permutations=permutations, output_dir=REACTOME_GSEA
-    )
-
-    reactome_gsea_results.res2d.to_csv(REACTOME_GSEA_TSV.format(data, date_today), sep='\t')
-
-    logger.info('Running WikiPathways')
-    wikipathways_gsea_results = run_gsea(
-        gene_exp, wikipathways_gene_set, PHENOTYPE, permutations=permutations, output_dir=WIKIPATHWAYS_GSEA
-    )
-
-    wikipathways_gsea_results.res2d.to_csv(WIKIPATHWAYS_GSEA_TSV.format(data, date_today), sep='\t')
-
-    logger.info('Running MergeDataset')
-    merge_gsea_results = run_gsea(
-        gene_exp, merge_gene_set, PHENOTYPE, permutations=permutations, output_dir=MERGE_GSEA
-    )
-
-    merge_gsea_results.res2d.to_csv(MERGE_GSEA_TSV.format(data, date_today), sep='\t')
-
-    logger.info('Done with GSEA analysis')
-
-
-@main.command()
-@click.option('-d', '--data', type=click.Choice(CANCER_DATA_SETS), required=True, help='Name of dataset')
-def ssgsea_analysis(data):
+def ssgsea(data):
     """Run ssGSEA on TCGA data."""
     click.echo('Running ssGSEA for the {} dataset'.format(data))
 
@@ -234,7 +260,15 @@ def ssgsea_analysis(data):
     logger.info('Done with ssGSEA analysis')
 
 
-@main.command()
+"""Prediction methods."""
+
+
+@main.group()
+def prediction():
+    """Prediction methods."""
+
+
+@prediction.command()
 @click.option('-d', '--data', type=click.Choice(CANCER_DATA_SETS), required=True, help='Name of dataset')
 @click.option('-ocv', '--outer-cv', type=int, default=10, show_default=True, help='Number of k splits in outer cv')
 @click.option('-icv', '--inner-cv', type=int, default=10, show_default=True, help='Number of k splits in inner cv')
@@ -243,8 +277,8 @@ def ssgsea_analysis(data):
     help='Number of max iterations to converge'
 )
 @click.option('--turn-off-warnings', is_flag=True, help='Turns off warnings')
-def train_elastic_net(data, outer_cv, inner_cv, max_iterations, turn_off_warnings):
-    """Train elastic net."""
+def binary(data, outer_cv, inner_cv, max_iterations, turn_off_warnings):
+    """Train elastic net for binary prediction."""
     make_classifier_results_directory()
     click.echo('Training Elastic Net via nested CV in the {} dataset with {} outer loops and {} inner loops'.format(
         data,
@@ -324,10 +358,11 @@ def train_elastic_net(data, outer_cv, inner_cv, max_iterations, turn_off_warning
     click.echo("MERGE_SSGSEA_NES AUCS: {}".format(aucs))
 
 
-@main.command()
-@click.option('-s', '--ssgsea-scores-path', type=click.Path, required=True,
+@prediction.command()
+@click.option('-s', '--ssgsea-scores-path', type=click.Path(exists=True), required=True,
               help='ssGSEA scores file')
-@click.option('-p', '--phenotypes-path', type=click.Path, required=True, help='Path to the phenotypes file')
+@click.option('-p', '--phenotypes-path', type=click.Path(exists=True), required=True,
+              help='Path to the phenotypes file')
 @click.option('-ocv', '--outer-cv', type=int, default=10, show_default=True, help='Number of k splits in outer cv')
 @click.option('-icv', '--inner-cv', type=int, default=10, show_default=True, help='Number of k splits in inner cv')
 @click.option(
@@ -356,16 +391,16 @@ def test_stability_prediction(ssgsea_scores_path, phenotypes_path, outer_cv, inn
     click.echo('Hyperparameter list {}'.format(parameter_list))
 
     results = train_elastic_net_model(
-        ssgsea_scores_path, phenotypes_path, outer_cv, inner_cv, parameter_list, max_iter=max_iterations
+        ssgsea_scores_path, phenotypes_path, outer_cv, inner_cv, parameter_list, 'elastic_net', max_iter=max_iterations
     )
 
 
-@main.command()
+@prediction.command()
 @click.option('-d', '--data', type=str, required=True, help='Name of dataset')
 @click.option('-ocv', '--outer-cv', type=int, default=10, show_default=True, help='Number of k splits in outer cv')
 @click.option('-icv', '--inner-cv', type=int, default=10, show_default=True, help='Number of k splits in inner cv')
 @click.option('--turn-off-warnings', is_flag=True, help='Turns off warnings')
-def train_survival(data, outer_cv, inner_cv, turn_off_warnings):
+def survival(data, outer_cv, inner_cv, turn_off_warnings):
     """Train survival model."""
     click.echo('Running survival analysis for {} with: {} outer CVs and {} inner CVS'.format(data, outer_cv, inner_cv))
 
