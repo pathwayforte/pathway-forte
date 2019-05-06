@@ -1,0 +1,5 @@
+gene_symbol,fold_change,p_value
+A,3,0.001
+B,-3,2
+C,-3,0.001
+D,-1,0.001

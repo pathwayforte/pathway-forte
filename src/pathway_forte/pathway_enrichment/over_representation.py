@@ -28,7 +28,7 @@ def filter_fold_change_fd(df):
     """Return significantly differentially expressed genes in fold change df."""
     filtered_df = df.query(f'({FOLD_CHANGE} <= -2 | {FOLD_CHANGE} >= 2) & {P_VALUE} <= 0.01')
 
-    return filtered_df[GENE_SYMBOL]
+    return set(filtered_df[GENE_SYMBOL])
 
 
 def _prepare_hypergeometric_test(query_gene_set, pathway_gene_set, gene_universe):
@@ -40,6 +40,12 @@ def _prepare_hypergeometric_test(query_gene_set, pathway_gene_set, gene_universe
     :rtype: numpy.ndarray
     :return: 2x2 matrix
     """
+    # Cast lists to sets
+    if not isinstance(query_gene_set, set):
+        query_gene_set = set(query_gene_set)
+    if not isinstance(pathway_gene_set, set):
+        pathway_gene_set = set(pathway_gene_set)
+
     return np.array(
         [[len(query_gene_set.intersection(pathway_gene_set)),
           len(query_gene_set.difference(pathway_gene_set))
