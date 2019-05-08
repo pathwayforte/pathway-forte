@@ -410,14 +410,16 @@ def get_pairwise_mapping_numbers(
     )
 
     # Get set of all actual equivalent mappings in filtered merge dataset
-    actual_merge = set(tuple(mapping) for mapping in kegg_pathways_actual if mapping) | set(
-        tuple(mapping) for mapping in reactome_pathways_actual if mapping) | set(
-        tuple(mapping) for mapping in wikipathways_pathways_actual if mapping)
+    actual_merge = \
+        set(tuple(mapping) for mapping in kegg_pathways_actual if mapping) | \
+        set(tuple(mapping) for mapping in reactome_pathways_actual if mapping) | \
+        set(tuple(mapping) for mapping in wikipathways_pathways_actual if mapping)
 
     # Get set of all expected equivalent mappings in total merge dataset
-    expected_merge = set(tuple(mapping) for mapping in kegg_pathways_expected) | set(
-        tuple(mapping) for mapping in reactome_pathways_expected) | set(
-        tuple(mapping) for mapping in wikipathways_pathways_expected)
+    expected_merge = \
+        set(tuple(mapping) for mapping in kegg_pathways_expected if mapping) | \
+        set(tuple(mapping) for mapping in reactome_pathways_expected if mapping) | \
+        set(tuple(mapping) for mapping in wikipathways_pathways_expected if mapping)
 
     # Get number of actual and expected mappings for merge dataset
     actual_num_dict['Merge dataset'] = len(actual_merge)
