@@ -64,7 +64,6 @@ def run_gsea(gene_exp, gene_set, phenotype_class, permutations=10, output_dir=GS
         permutation_num=permutations,  # reduce number to speed up test
         outdir=output_dir,  # do not write output to disk
         no_plot=True,  # Skip plotting
-        method='signal_to_noise',
         processes=4,
         format='png'
     )
