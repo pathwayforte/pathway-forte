@@ -130,7 +130,7 @@ def fisher(genesets, fold_changes, no_threshold):
     with open(output, 'wb') as file:
         pickle.dump(enriched_pathways, file, protocol=4)
 
-    click.echo('Results exported to {}')
+    click.echo(f'Results exported to {output}')
 
 
 """FCS Analyses"""
