@@ -64,7 +64,7 @@ def _prepare_hypergeometric_test(query_gene_set, pathway_gene_set, gene_universe
 
 
 def perform_hypergeometric_test(
-        genes_to_test, pathway_dict, gene_universe=42609, apply_threshold=False, threshold=0.01
+        genes_to_test, pathway_dict, gene_universe=41714, apply_threshold=False, threshold=0.01
 ):
     """Perform hypergeometric tests.
 
