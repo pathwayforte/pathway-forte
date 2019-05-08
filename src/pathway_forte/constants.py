@@ -196,7 +196,7 @@ GENESET_COLUMN_NAMES = {
 """Columns to read to perform ORA analysis."""
 
 GENE_SYMBOL = 'gene_symbol'
-FOLD_CHANGE = 'fold_change'
+FOLD_CHANGE = 'log2FoldChange'
 P_VALUE = 'p_value'
 
 FC_COLUMNS = {

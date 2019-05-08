@@ -124,7 +124,13 @@ def fisher(genesets, fold_changes, no_threshold):
         apply_threshold=threshold
     )
 
-    click.echo(enriched_pathways)
+    output = os.path.join(os.getcwd(), 'results.pickle')
+
+    # Export dictionary as pickle
+    with open(output, 'wb') as file:
+        pickle.dump(enriched_pathways, file, protocol=4)
+
+    click.echo('Results exported to {}')
 
 
 """FCS Analyses"""

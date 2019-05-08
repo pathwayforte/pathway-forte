@@ -8,7 +8,7 @@ import pandas as pd
 from scipy.stats import fisher_exact
 from statsmodels.stats.multitest import multipletests
 
-from pathway_forte.constants import FC_COLUMNS, FOLD_CHANGE, P_VALUE, GENE_SYMBOL
+from pathway_forte.constants import FC_COLUMNS, FOLD_CHANGE, GENE_SYMBOL
 
 log = logging.getLogger(__name__)
 
@@ -24,9 +24,15 @@ def read_fold_change_df(file):
     return df
 
 
-def filter_fold_change_fd(df):
+def filter_fold_change_fd(df, p_value=False):
     """Return significantly differentially expressed genes in fold change df."""
-    filtered_df = df.query(f'({FOLD_CHANGE} <= -2 | {FOLD_CHANGE} >= 2) & {P_VALUE} <= 0.01')
+    query_exp = f'({FOLD_CHANGE} <= -2 | {FOLD_CHANGE} >= 2)'
+
+    # Apply p_value threshold too
+    if p_value:
+        query_exp += ' & {P_VALUE} <= 0.01'
+
+    filtered_df = df.query(query_exp)
 
     return set(filtered_df[GENE_SYMBOL])
 
