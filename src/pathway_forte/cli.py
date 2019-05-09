@@ -47,7 +47,7 @@ def datasets():
 
 
 @main.command()
-def export_gene_sets():
+def export():
     """Generate Gene Sets using ComPath."""
     from bio2bel_kegg import Manager as KeggManager
     from bio2bel_reactome import Manager as ReactomeManager
