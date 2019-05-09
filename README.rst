@@ -1,5 +1,5 @@
-PathwayForte |build| |docs|
-===========================
+PathwayForte |build| |docs| |zenodo|
+====================================
 A Python package for benchmarking pathway databases in functional enrichment and prediction methods
 tasks.
 
@@ -48,8 +48,8 @@ How to Use
 .. |pypi_license| image:: https://img.shields.io/pypi/l/pathway_forte.svg
     :alt: Apache-2.0
 
-.. |zenodo| image:: https://zenodo.org/badge/.svg
-    :target: https://zenodo.org/badge/latestdoi/
+.. |zenodo| image:: https://zenodo.org/badge/178654585.svg
+    :target: https://zenodo.org/badge/latestdoi/178654585
 
 
 
