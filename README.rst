@@ -16,12 +16,14 @@ Installation |pypi_version| |python_versions| |pypi_license|
 
 .. code-block:: sh
 
-    $ git clone https://github.com/pathwayforte/pathway_forte.git
-    $ cd pathway_forte
+    $ git clone https://github.com/pathwayforte/pathway-forte.git
+    $ cd pathway-forte
     $ python3 -m pip install -e .
 
 Main Commands
 -------------
+
+The table below lists the main commands of PathwayForte.
 
 +------------+--------------------------------+
 | Command    | Action                         |
@@ -36,6 +38,14 @@ Main Commands
 +------------+--------------------------------+
 | prediction | List of Prediction Methods     |
 +------------+--------------------------------+
+
+More details of some commands:
+
+1. **ora**. Over-Representation Analysis (e.g., one-tail hyper-geometric test).
+
+2. **.fcs**.. Functional Class Score Analaysis such as GSEA and ssGSEA using `GSEAPy <https://github.com/ostrokach/gseapy>`_.
+
+3. **.prediction**.. Prediction methods include training elastic nets for binary classification, training SVMs for multi-classification tasks, or survival analysis.
 
 
 .. |build| image:: https://travis-ci.com/pathwayforte/pathway-forte.svg?branch=master
