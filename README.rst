@@ -20,8 +20,23 @@ Installation |pypi_version| |python_versions| |pypi_license|
     $ cd pathway_forte
     $ python3 -m pip install -e .
 
-How to Use
-----------
+Main Commands
+-------------
+
++------------+--------------------------------+
+| Command    | Action                         |
++============+================================+
+| datasets   | Lists of Cancer Datasets       |
++------------+--------------------------------+
+| export     | Export Gene Sets using ComPath |
++------------+--------------------------------+
+| ora        | List of ORA Analyses           |
++------------+--------------------------------+
+| fcs        | List of FCS Analyses           |
++------------+--------------------------------+
+| prediction | List of Prediction Methods     |
++------------+--------------------------------+
+
 
 .. |build| image:: https://travis-ci.com/pathwayforte/pathway-forte.svg?branch=master
     :target: https://travis-ci.com/pathwayforte/pathway-forte
