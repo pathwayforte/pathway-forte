@@ -1,5 +1,5 @@
-PathwayForte |build| |docs| |zenodo|
-====================================
+PathwayForte |build| |docs| |coverage| |zenodo|
+===============================================
 A Python package for benchmarking pathway databases in functional enrichment and prediction methods
 tasks.
 
@@ -59,10 +59,6 @@ More details of some commands:
 .. |coverage| image:: https://codecov.io/gh/pathwayforte/pathway-forte/coverage.svg?branch=master
     :target: https://codecov.io/gh/pathwayforte/pathway-forte?branch=master
     :alt: Coverage Status
-
-.. |climate| image:: https://codeclimate.com/github/pathwayforte/pathway-forte/badges/gpa.svg
-    :target: https://codeclimate.com/github/pathwayforte/pathway-forte
-    :alt: Code Climate
 
 .. |python_versions| image:: https://img.shields.io/pypi/pyversions/pathway_forte.svg
     :alt: Stable Supported Python Versions
