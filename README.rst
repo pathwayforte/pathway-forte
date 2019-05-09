@@ -43,9 +43,9 @@ More details of some commands:
 
 1. **ora**. Over-Representation Analysis (e.g., one-tail hyper-geometric test).
 
-2. **.fcs**.. Functional Class Score Analaysis such as GSEA and ssGSEA using `GSEAPy <https://github.com/ostrokach/gseapy>`_.
+2. **fcs**. Functional Class Score Analaysis such as GSEA and ssGSEA using `GSEAPy <https://github.com/ostrokach/gseapy>`_.
 
-3. **.prediction**.. Prediction methods include training elastic nets for binary classification, training SVMs for multi-classification tasks, or survival analysis.
+3. **prediction**. Prediction methods include training elastic nets for binary classification, training SVMs for multi-classification tasks, or survival analysis.
 
 
 .. |build| image:: https://travis-ci.com/pathwayforte/pathway-forte.svg?branch=master
