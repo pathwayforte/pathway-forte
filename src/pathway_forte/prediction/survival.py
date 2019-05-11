@@ -12,7 +12,6 @@ import os
 
 import numpy as np
 import pandas as pd
-from sklearn.decomposition import PCA
 from sklearn.model_selection import GridSearchCV, KFold
 from sksurv.linear_model import CoxnetSurvivalAnalysis
 from sksurv.metrics import concordance_index_censored
@@ -120,43 +119,23 @@ def survival_data_to_csv(clinical_data, dataset):
     clinical_data_df.to_csv('{}_survival_data.tsv'.format(dataset), sep='\t')
 
 
-def pca_chaining(X_train, X_test, explained_variance):
-    """Chain PCA with estimator.
-
-    :param pandas.core.frame.DataFrame X_train: Training set to apply dimensionality reduction to
-    :param pandas.core.series.Series X_test: Test set to apply dimensionality reduction to
-    :param Optional explained_variance: Amount of variance retained
-    :return: array-like, shape (n_samples, n_components)
-    """
-    # Make an instance of the Model
-    pca = PCA(explained_variance)
-
-    # Fit PCA on the training set only
-    pca.fit(X_train)
-
-    # Transform to both the training set and the test set.
-    X_train = pca.transform(X_train)
-    X_test = pca.transform(X_test)
-
-    return X_train, X_test
-
-
 def train_survival_model(
-        x_features,
-        y_labels,
+        x,
+        y,
         outer_cv_splits,
         inner_cv_splits,
-        hyperparameter_space,
+        param_grid,
 ):
     """Train survival model with ssGSEA normalized enrichment scores (NES) from TCGA expression data and cBioPortal
     survival data on patient survival status and survival times.
-    :param pandas.core.frame.DataFrame x_features: dataFrame of ssGSEA NES where controls are filtered out, as are
-    patients with missing enrichment scores or survival data
-    :param numpy.ndarray y_labels: Structured array A where binary survival status is first field and survival time is
-    second field.
+
+    :param pandas.core.frame.DataFrame x: dataFrame of ssGSEA NES where controls are filtered out, as are
+     patients with missing enrichment scores or survival data
+    :param numpy.ndarray y: Structured array A where binary survival status is first field and survival time is
+     second field.
     :param int outer_cv_splits: number of folds to split data in train/test sets in outer cross validation loop
     :param int inner_cv_splits: number of folds to split data in train/test sets in inner cross validation loop
-    :param dict hyperparameter_space: parameter types and values to try in grid search
+    :param dict param_grid: parameter types and values to try in grid search
     :return: concordance scores
     """
     concordance_scores = []
@@ -164,49 +143,47 @@ def train_survival_model(
     kf = KFold(n_splits=outer_cv_splits, shuffle=True)
     inner_cv = KFold(n_splits=inner_cv_splits)
 
-    iterator = tqdm(kf.split(x_features, y_labels))
+    iterator = tqdm(kf.split(x, y))
 
-    for i, (train_index, test_index) in enumerate(iterator):
-        X_train = x_features.iloc[train_index]
-
-        X_test = x_features.iloc[test_index]
-
-        y_train, y_test = np.asarray([y_labels[i] for i in train_index]), np.asarray(
-            [y_labels[i] for i in test_index])
+    for i, (train_indexes, test_indexes) in enumerate(iterator):
+        x_train = x.iloc[train_indexes]
+        x_test = x.iloc[test_indexes]
+        y_train = np.asarray([y[train_index] for train_index in train_indexes])
+        y_test = np.asarray([y[test_index] for test_index in test_indexes])
 
         # Instantiate Cox’s proportional hazard’s regression model with elastic net penalty
         coxnet = CoxnetSurvivalAnalysis()
 
         # Tune hyper-parameters (e.g., L1-ratio) of the estimator using grid search
-        gcv = GridSearchCV(estimator=coxnet, param_grid=hyperparameter_space, cv=inner_cv, return_train_score=True)
+        gcv = GridSearchCV(estimator=coxnet, param_grid=param_grid, cv=inner_cv, return_train_score=True)
 
         # Search grid
-        gcv.fit(X_train, y_train)
+        gcv.fit(x_train, y_train)
 
         # Extract best model from the grid
         coxnet = gcv.best_estimator_
 
         # predict y using the best model from the grid
-        prediction = coxnet.predict(X_test)
+        prediction = coxnet.predict(x_test)
 
         # Evaluate the performance of the model during grid search using Harrell's concordance index
-        result = concordance_index_censored(
-            [y_labels[i]['status'] for i in test_index],  # Get the status array for test set
-            [y_labels[i]['days_to_death'] for i in test_index],  # Get the days to death for test set
-            prediction  # Prediction scores
+        cindex, concordant, discordant, tied_risk, tied_time = concordance_index_censored(
+            [y[test_index]['status'] for test_index in test_indexes],  # The status array for test set
+            [y[test_index]['days_to_death'] for test_index in test_indexes],  # The days to death for test set
+            prediction,  # Prediction scores
         )
 
-        print('best c-index: {}'.format(result[0]))
+        print('best c-index: {}'.format(cindex))
         print('best parameter: {}'.format(gcv.best_params_))
 
         concordance_scores.append({
-            "c-index": result[0],
-            "number of concordant pairs": result[1],
-            "number of discordant pairs": result[2],
-            "tied_risk": result[3],
-            "tied_time": result[4],
+            "c-index": cindex,
+            "number of concordant pairs": concordant,
+            "number of discordant pairs": discordant,
+            "tied_risk": tied_risk,
+            "tied_time": tied_time,
             "l1-ratio": gcv.best_estimator_.l1_ratio,
-            "split": i
+            "split": i,
         })
 
     # avg_c_index = np.average([
@@ -224,12 +201,11 @@ def run_survival_all_datasets(
         path,
         outer_cv_splits,
         inner_cv_splits,
-        hyperparameter_space,
+        param_grid,
 ):
     results = {}
     # For each cancer dataset analyzed in the dataset
     for file in os.listdir(path):
-
         # Skip all files that do not start with tsv
         if not file.endswith('tsv'):
             continue
@@ -266,7 +242,7 @@ def run_survival_all_datasets(
             event_time_array,
             outer_cv_splits,
             inner_cv_splits,
-            hyperparameter_space,
+            param_grid,
         )
 
     return results
@@ -276,8 +252,7 @@ def run_survival_on_dataset(
         ssgsea_file,
         outer_cv_splits,
         inner_cv_splits,
-        hyperparameter_space,
-        chain_pca
+        param_grid,
 ):
     if 'msig' in ssgsea_file:
         file_name = ssgsea_file.strip('.tsv').split('_')
@@ -312,7 +287,7 @@ def run_survival_on_dataset(
         event_time_array,
         outer_cv_splits,
         inner_cv_splits,
-        hyperparameter_space,
+        param_grid,
     )
 
 
@@ -320,22 +295,15 @@ def iterator_input_folders(
         main_directory,
         outer_cv_splits,
         inner_cv_splits,
-        hyperparameter_space,
+        param_grid,
 ):
-    """Iterates through all database folder in main folder."""
-    PARENT = os.path.join(RESULTS, main_directory)
-
-    results = {}
-
-    # For each database
-    for pathway_resource in PATHWAY_RESOURCES:
-        PATHWAY_DIRECTORY = os.path.join(PARENT, pathway_resource)
-
-        results[pathway_resource] = run_survival_all_datasets(
-            PATHWAY_DIRECTORY,
+    """Iterate through all database folder in main folder."""
+    return {
+        pathway_resource: run_survival_all_datasets(
+            os.path.join(RESULTS, main_directory, pathway_resource),
             outer_cv_splits,
             inner_cv_splits,
-            hyperparameter_space,
+            param_grid,
         )
-
-    return results
+        for pathway_resource in PATHWAY_RESOURCES
+    }

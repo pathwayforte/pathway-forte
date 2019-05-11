@@ -7,29 +7,12 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 from sklearn import metrics
-from sklearn.decomposition import PCA
 from sklearn.model_selection import GridSearchCV, KFold
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.svm import SVC
 from tqdm import tqdm
 
-
-def pca_chaining(train, test, n_components):
-    """Chain PCA with logistic regression.
-
-    :param pandas.core.frame.DataFrame train: Training set to apply dimensionality reduction to
-    :param pandas.core.series.Series test: Test set to apply dimensionality reduction to
-    :param n_components: Amount of variance retained
-    :return: array-like, shape (n_samples, n_components)
-    """
-    # Make an instance of the model
-    pca = PCA(n_components)
-
-    # Fit PCA on the training set only then transform both
-    train_transformed = pca.fit_transform(train)
-    test_transformed = pca.transform(test)
-
-    return train_transformed, test_transformed
+from pathway_forte.prediction.utils import pca_chaining
 
 
 def get_sample_ids_with_cancer_subtypes(file_path):

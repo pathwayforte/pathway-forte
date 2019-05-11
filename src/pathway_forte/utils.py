@@ -8,7 +8,13 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
-def plot_aucs(data, database, data_set, export_directory, shuffled=False):
+def plot_aucs(
+        data,
+        database_name: str,
+        dataset_name: str,
+        export_directory: str,
+        shuffled: bool = False,
+) -> None:
     """Render boxplot with AUC values."""
     sns.boxplot(
         y=data,
@@ -16,21 +22,20 @@ def plot_aucs(data, database, data_set, export_directory, shuffled=False):
         palette="Set2"
     ).set_title('{}ROC-AUC scores for {}'.format(
         "Shuffled " if shuffled else "",
-        data_set
+        dataset_name
     ), fontsize=14)
 
     plt.ylabel('AUC', fontsize=13)
-    plt.savefig(os.path.join(export_directory, "{}_{}_aucs.png".format(database, data_set)))
+    plt.savefig(os.path.join(export_directory, f"{database_name}_{dataset_name}_aucs.png"))
 
 
-def get_num_samples(samples_file):
+def get_num_samples(samples_file_path: str) -> int:
     """Return the number of samples.
 
-    :param str samples_file: file path
-    :rtype: int
+    :param samples_file_path: file path
     :return: number of samples
     """
-    with open(samples_file, 'r') as num_samples:
-        sample_numbers = num_samples.read().replace('\n', '')
+    with open(samples_file_path) as file:
+        sample_numbers = file.read().replace('\n', '')
 
     return int(sample_numbers)

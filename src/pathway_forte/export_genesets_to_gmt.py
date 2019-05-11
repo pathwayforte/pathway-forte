@@ -3,19 +3,49 @@
 """This module contains the code to export genesets to .gmt files."""
 
 import itertools as itt
+import logging
 
+import bio2bel_kegg
+import bio2bel_reactome
+import bio2bel_wikipathways
 import pandas as pd
+from compath_utils import CompathManager
 
 from pathway_forte.constants import *
 
-__all__ = (
+__all__ = [
+    'get_all_pathway_genesets',
     'get_compath_genesets',
     'create_geneset_df',
     'export_gmt_files',
-)
+]
+
+logger = logging.getLogger(__name__)
 
 
-def get_compath_genesets(source, manager):
+def get_all_pathway_genesets():
+    """Get ComPath/Bio2BEL gene sets for each pathway, from each database."""
+    logger.info('Getting ComPath/Bio2BEL KEGG gene sets')
+    kegg_manager = bio2bel_kegg.Manager()
+    kegg_gene_set = get_compath_genesets(KEGG, kegg_manager)
+
+    logger.info('Getting ComPath/Bio2BEL Reactome gene sets')
+    reactome_manager = bio2bel_reactome.Manager()
+    reactome_gene_set = get_compath_genesets(REACTOME, reactome_manager)
+
+    logger.info('Getting ComPath/Bio2BEL WikiPathways gene sets')
+    wikipathways_manager = bio2bel_wikipathways.Manager()
+    wikipathways_gene_set = get_compath_genesets(WIKIPATHWAYS, wikipathways_manager)
+
+    # Get ComPath/Bio2BEL genesets for each pathway, from each database
+    return {
+        **kegg_gene_set,
+        **reactome_gene_set,
+        **wikipathways_gene_set,
+    }
+
+
+def get_compath_genesets(source, manager: CompathManager):
     """Get ComPath/Bio2BEL gene-sets.
 
     :param source: either source database or merged
@@ -25,7 +55,6 @@ def get_compath_genesets(source, manager):
     pathway_genesets = manager.export_gene_sets()
 
     for key, value in pathway_genesets.items():
-
         if None in value:
             value.remove(None)
 
@@ -44,8 +73,9 @@ def get_compath_genesets(source, manager):
 
 
 def create_geneset_df(all_pathway_genesets, mappings_dict):
-    """Create dataframe of genesets for all pathways from all databases. The dataFrame also specifies
-     genesets from 2 or more databases for equivalent pathways as merged genesets.
+    """Create dataframe of gene sets for all pathways from all databases.
+
+    The dataFrame also specifies genesets from 2 or more databases for equivalent pathways as merged genesets.
 
     :param all_pathway_genesets: dictionary of ComPath/Bio2BEL gene sets from all databases
     :param mappings_dict: equivalent pathway pairs dictionary
@@ -57,19 +87,21 @@ def create_geneset_df(all_pathway_genesets, mappings_dict):
 
     # Get genesets for each pathway
     for (database, pathway_id), geneset in all_pathway_genesets.items():
-
         if (database, pathway_id) in skip_duplicate_pathways:
             continue
 
         # Geneset for each pathway and its equivalent pathways. If there are no equivalent pathways,
         # the resulting DataFrame will contain only the geneset for the pathway in question.
-        row_dict = {PATHWAY_ID: pathway_id, GENESET_COLUMN_NAMES[database]: geneset, RESOURCE: database}
+        row_dict = {
+            PATHWAY_ID: pathway_id,
+            GENESET_COLUMN_NAMES[database]: geneset,
+            RESOURCE: database,
+        }
 
         merged_genesets = [geneset]
 
         # Check if there are any equivalent mappings for a specific pathway
         if (database, pathway_id) in mappings_dict:
-
             # Current cell info
             pathway_id_cell = [pathway_id]
             resource_id_cell = [database]
@@ -98,7 +130,7 @@ def create_geneset_df(all_pathway_genesets, mappings_dict):
     return df
 
 
-def _remove_equivalence_in_df(df, database):
+def _remove_equivalence_in_df(df: pd.DataFrame, database: str) -> pd.DataFrame:
     """Remove equivalent pathway IDs and resources from dataframe.
 
     :param df: dataFrame of all gene sets and their source
@@ -108,20 +140,21 @@ def _remove_equivalence_in_df(df, database):
     clean_df = pd.DataFrame(columns=[PATHWAY_ID, RESOURCE, GENESET_COLUMN_NAMES[database]])
 
     for row_num, row in df.iterrows():
-
-        row_dict = {GENESET_COLUMN_NAMES[database]: row[GENESET_COLUMN_NAMES[database]]}
+        row_dict = {
+            GENESET_COLUMN_NAMES[database]: row[GENESET_COLUMN_NAMES[database]]
+        }
 
         resources = row[RESOURCE].split('|')
         pathway_ids = row[PATHWAY_ID].split('|')
 
-        for i in range(0, len(resources)):
-            if resources[i] != database:
+        for resource, pathway_id in zip(resources, pathway_ids):
+            if resource != database:
                 continue
 
-            row_dict[RESOURCE] = resources[i]
-            row_dict[PATHWAY_ID] = pathway_ids[i]
+            row_dict[RESOURCE] = resource
+            row_dict[PATHWAY_ID] = pathway_id
 
-        if not RESOURCE in row_dict or not PATHWAY_ID in row_dict:
+        if RESOURCE not in row_dict or PATHWAY_ID not in row_dict:
             continue
 
         clean_df = clean_df.append(row_dict, ignore_index=True, verify_integrity=True)
@@ -136,32 +169,33 @@ def _filter_geneset_file(infile, outfile):
         "{": "",
         "}": "",
         "\'": "",
-        ", ": "\t"
+        ", ": "\t",
     }
 
-    with open(infile, 'r') as f:
-        text = f.read()
+    with open(infile, 'r') as file:
+        text = file.read()
 
-        for i, j in special_characters.items():
-            text = text.replace(i, j)
+    for old, new in special_characters.items():
+        text = text.replace(old, new)
 
-    with open(outfile, 'w') as w:
-        w.write(text)
+    with open(outfile, 'w') as file:
+        file.write(text)
 
 
-def export_gmt_files(dataframe):
-    """Create dataFrame of genesets for all pathways from all databases. Note that the dataFrame also specifies
-    genesets from 2 or more databases for equivalent pathways as merged genesets.
+def export_gmt_files(df: pd.DataFrame):
+    """Create dataFrame of gene sets for all pathways from all databases.
+
+    Note that the dataframe also specifies gene sets from 2 or more databases for equivalent pathways as merged gene
+    sets.
     """
-    kegg_df = _remove_equivalence_in_df(dataframe, KEGG)
-    reactome_df = _remove_equivalence_in_df(dataframe, REACTOME)
-    wikipathways_df = _remove_equivalence_in_df(dataframe, WIKIPATHWAYS)
-    merged_geneset_df = dataframe[[PATHWAY_ID, RESOURCE, MERGED_GENESET]]
+    kegg_df = _remove_equivalence_in_df(df, KEGG)
+    reactome_df = _remove_equivalence_in_df(df, REACTOME)
+    wikipathways_df = _remove_equivalence_in_df(df, WIKIPATHWAYS)
+    merged_geneset_df = df[[PATHWAY_ID, RESOURCE, MERGED_GENESET]]
 
     kegg_df.to_csv(TEMPORAL_KEGG_PATHWAY_GENESET_CSV, header=False, index=False, sep='\t', encoding='utf-8')
     reactome_df.to_csv(TEMPORAL_REACTOME_PATHWAY_GENESET_CSV, header=False, index=False, sep='\t', encoding='utf-8')
-    wikipathways_df.to_csv(
-        TEMPORAL_WIKIPATHWAYS_PATHWAY_GENESET_CSV, header=False, index=False, sep='\t', encoding='utf-8'
+    wikipathways_df.to_csv(TEMPORAL_WIKIPATHWAYS_PATHWAY_GENESET_CSV, header=False, index=False, sep='\t', encoding='utf-8'
     )
     merged_geneset_df.to_csv(TEMPORAL_MERGED_PATHWAY_GENESET_CSV, header=False, index=False, sep='\t', encoding='utf-8')
 

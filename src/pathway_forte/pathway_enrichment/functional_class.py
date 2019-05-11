@@ -3,9 +3,14 @@
 """This module contain the functional class methods implemented in PathwayForte. For now, GSEA and ssGSEA"""
 
 import itertools as itt
+from typing import Optional
 
+import bio2bel_kegg
+import bio2bel_reactome
+import bio2bel_wikipathways
 import gseapy
 import pandas as pd
+from gseapy.gsea import SingleSampleGSEA
 
 from pathway_forte.constants import *
 from pathway_forte.mappings import get_mapping_dict, load_compath_mapping_dfs
@@ -14,11 +19,12 @@ from pathway_forte.utils import get_num_samples
 
 
 def create_cls_file(gene_expression_file, normal_sample_file, tumor_sample_file, data):
-    """Create categorical (e.g. tumor vs sample) class file format (i.e., .cls) for input into gsea
+    """Create categorical (e.g. tumor vs sample) class file format (i.e., .cls) for input into GSEA
 
     :param str gene_expression_file: Text file containing expression values for each gene from each sample.
     :param str normal_sample_file:
     :param str tumor_sample_file:
+    :param data:
     """
     num_normal_samples = get_num_samples(normal_sample_file)
     num_tumor_samples = get_num_samples(tumor_sample_file)
@@ -38,23 +44,22 @@ def create_cls_file(gene_expression_file, normal_sample_file, tumor_sample_file,
 
     output = PHENOTYPE_CLASSES.format(data)
 
-    with open(CLASSES.format(data), 'r') as f:
+    with open(CLASSES.format(data), 'r') as f, open(output, 'w') as w:
         data = f.read()
-        with open(output, 'w') as w:
-            w.write(data[:-1])
+        w.write(data[:-1])
 
 
-def run_gsea(gene_exp, gene_set, phenotype_class, permutations=10, output_dir=GSEA):
+def run_gsea(gene_exp: str, gene_set: str, phenotype_class: str, permutations: int = 10, output_dir: str = GSEA):
     """Run GSEA on a given dataset with a given gene set.
 
-    :param str gene_exp: file with gene expression data
-    :param str gene_set: gmt files containing pathway gene sets
-    :param str phenotype_class: cls file containing information on class labels
-    :param int permutations: number of permutations
-    :param str output_dir: output directory
+    :param gene_exp: file with gene expression data
+    :param gene_set: gmt files containing pathway gene sets
+    :param phenotype_class: cls file containing information on class labels
+    :param permutations: number of permutations
+    :param output_dir: output directory
     :return:
     """
-    gs_result = gseapy.gsea(
+    return gseapy.gsea(
         data=gene_exp,
         gene_sets=gene_set,
         cls=phenotype_class,  # cls=class_vector
@@ -65,18 +70,17 @@ def run_gsea(gene_exp, gene_set, phenotype_class, permutations=10, output_dir=GS
         outdir=output_dir,  # do not write output to disk
         no_plot=True,  # Skip plotting
         processes=4,
-        format='png'
+        format='png',
     )
-    return gs_result
 
 
 def filter_gsea_results(
         gsea_results_file,
         source,
-        kegg_manager=None,
-        reactome_manager=None,
-        wikipathways_manager=None,
-        p_value=None,
+        kegg_manager: Optional[bio2bel_kegg.Manager] = None,
+        reactome_manager: Optional[bio2bel_reactome.Manager] = None,
+        wikipathways_manager: Optional[bio2bel_wikipathways.Manager] = None,
+        p_value: Optional[float] = None,
         absolute_nes_filter=None,
         geneset_set_filter_minimum_size=None,
         geneset_set_filter_maximum_size=None,
@@ -98,7 +102,7 @@ def filter_gsea_results(
     gsea_results_df = pd.read_csv(gsea_results_file, sep='\t')
 
     # Filter dataFrame to include only those pathways with a p-value less than X
-    if p_value:
+    if p_value is not None:
         gsea_results_df = gsea_results_df.loc[gsea_results_df['pval'] < p_value]
 
     #  Filter dataFrame by magnitude of normalized enrichment scores
@@ -137,15 +141,17 @@ def filter_gsea_results(
         source,
         kegg_manager=kegg_manager,
         reactome_manager=reactome_manager,
-        wikipathways_manager=wikipathways_manager
+        wikipathways_manager=wikipathways_manager,
     )
 
 
-def gsea_merge_statistics(merged_pathways_df, dataset):
-    """Get statistics for pathways included in the merged gene sets dataFrame. These include the proportion of pathways
-    from each of the other databases and the proportion of pathways deriving from 2 or more primary resources
+def gsea_merge_statistics(merged_pathways_df: pd.DataFrame, dataset: str):
+    """Get statistics for pathways included in the merged gene sets dataFrame.
 
-    :param pandas.core.frame.DataFrame merged_pathways_df: dataFrame containing pathways from multiple databases
+    These include the proportion of pathways from each of the other databases and the proportion of pathways
+    deriving from 2 or more primary resources
+
+    :param merged_pathways_df: dataFrame containing pathways from multiple databases
     :return: statistics of contents in merged dataset
     """
     num_of_pathways = len(merged_pathways_df.index)
@@ -157,7 +163,6 @@ def gsea_merge_statistics(merged_pathways_df, dataset):
     merged_genesets = 0
 
     for pathway_id in merged_pathways_df['pathway_id']:
-
         if '|' in pathway_id:
             pathway_id.split('|')
 
@@ -173,7 +178,7 @@ def gsea_merge_statistics(merged_pathways_df, dataset):
         elif pathway_id.startswith('WP'):
             num_of_wikipathways_in_merged += 1
         else:
-            raise ValueError('Invalid pathway ID {}.'.format(pathway_id))
+            raise ValueError(f'Invalid pathway ID {pathway_id}.')
 
     kegg_contributions_to_merged = num_of_kegg_in_merged / num_of_pathways * 100
     reactome_contributions_to_merged = num_of_reactome_in_merged / num_of_pathways * 100
@@ -187,24 +192,25 @@ def gsea_merge_statistics(merged_pathways_df, dataset):
     print('{0:.2f}% are a combination of 2 or more databases'.format(proportion_of_merged_genesets))
 
 
-def rearrange_df_columns(df):
+def rearrange_df_columns(df: pd.DataFrame) -> pd.DataFrame:
     """Rearrange order of columns"""
     cols = df.columns.tolist()
     cols = cols[-1:] + cols[:-1]
     df = df[cols]
-
     return df
 
 
-def pathway_names_to_df(filtered_gsea_results_df,
-                        all_pathway_ids,
-                        source,
-                        kegg_manager=None,
-                        reactome_manager=None,
-                        wikipathways_manager=None
-                        ):
+def pathway_names_to_df(
+        filtered_gsea_results_df,
+        all_pathway_ids,
+        source,
+        kegg_manager: Optional[bio2bel_kegg.Manager] = None,
+        reactome_manager: Optional[bio2bel_reactome.Manager] = None,
+        wikipathways_manager: Optional[bio2bel_wikipathways.Manager] = None,
+) -> pd.DataFrame:
     """Get pathway names.
 
+    :param filtered_gsea_results_df:
     :param all_pathway_ids: list of pathway IDs
     :param source: pathway source (i.e., database name or 'Merged')
     :param kegg_manager: KEGG manager
@@ -217,7 +223,6 @@ def pathway_names_to_df(filtered_gsea_results_df,
             kegg_manager.get_pathway_by_id('path:' + pathway_id)
             for pathway_id in all_pathway_ids
         ]
-
         return rearrange_df_columns(filtered_gsea_results_df)
 
     elif source == REACTOME:
@@ -225,7 +230,6 @@ def pathway_names_to_df(filtered_gsea_results_df,
             reactome_manager.get_pathway_by_id(pathway_id)
             for pathway_id in all_pathway_ids
         ]
-
         return rearrange_df_columns(filtered_gsea_results_df)
 
     elif source == WIKIPATHWAYS:
@@ -233,36 +237,28 @@ def pathway_names_to_df(filtered_gsea_results_df,
             wikipathways_manager.get_pathway_by_id(pathway_id)
             for pathway_id in all_pathway_ids
         ]
-
         return rearrange_df_columns(filtered_gsea_results_df)
 
     merged_rankings = []
 
     for pathway_ids in all_pathway_ids:
-
         # A pathway might come from the union of multiple pathways via an equivalent mapping
         equivalent_pathways = []
 
         for pathway_id in pathway_ids.split('|'):
-
             if pathway_id.startswith('hsa'):
-
                 kegg_pathway_name = str(kegg_manager.get_pathway_by_id('path:' + pathway_id))
-
                 equivalent_pathways.append(kegg_pathway_name)
 
             elif pathway_id.startswith('R-HSA'):
-
                 reactome_pathway_name = str(reactome_manager.get_pathway_by_id(pathway_id))
                 equivalent_pathways.append(reactome_pathway_name)
 
             elif pathway_id.startswith('WP'):
-
                 wikipathways_pathway_name = str(wikipathways_manager.get_pathway_by_id(pathway_id))
                 equivalent_pathways.append(wikipathways_pathway_name)
 
         merged_pathways = '|'.join(equivalent_pathways)
-
         merged_rankings.append(merged_pathways)
 
     filtered_gsea_results_df['pathway_name'] = merged_rankings
@@ -272,50 +268,56 @@ def pathway_names_to_df(filtered_gsea_results_df,
 
 def gsea_results_to_filtered_df(
         dataset,
-        kegg_manager=None,
-        reactome_manager=None,
-        wikipathways_manager=None,
-        p_value=None,
+        kegg_manager: Optional[bio2bel_kegg.Manager] = None,
+        reactome_manager: Optional[bio2bel_reactome.Manager] = None,
+        wikipathways_manager: Optional[bio2bel_wikipathways.Manager] = None,
+        p_value: Optional[float] = None,
         absolute_nes_filter=None,
         geneset_set_filter_minimum_size=None,
         geneset_set_filter_maximum_size=None
 ):
-    KEGG_GSEA = os.path.join(GSEA, KEGG, 'kegg_{}.tsv').format(dataset)
-    REACTOME_GSEA = os.path.join(GSEA, REACTOME, 'reactome_{}.tsv').format(dataset)
-    WIKIPATHWAYS_GSEA = os.path.join(GSEA, WIKIPATHWAYS, 'wikipathways_{}.tsv').format(dataset)
-    MERGE_GSEA = os.path.join(GSEA, MERGED_GENESET, 'merge_{}.tsv').format(dataset)
+    kegg_gsea_path = os.path.join(GSEA, KEGG, f'kegg_{dataset}.tsv')
+    reactome_gsea_path = os.path.join(GSEA, REACTOME, f'reactome_{dataset}.tsv')
+    wikipathways_gsea_path = os.path.join(GSEA, WIKIPATHWAYS, f'wikipathways_{dataset}.tsv')
+    merge_gsea_path = os.path.join(GSEA, MERGED_GENESET, f'merge_{dataset}.tsv')
 
     # Load GSEA results and filter dataFrames
     kegg_pathway_df = filter_gsea_results(
-        KEGG_GSEA,
+        kegg_gsea_path,
         KEGG,
         kegg_manager=kegg_manager,
-        p_value=p_value,
-        absolute_nes_filter=absolute_nes_filter,
-        geneset_set_filter_minimum_size=geneset_set_filter_minimum_size,
-        geneset_set_filter_maximum_size=geneset_set_filter_maximum_size
-    )
-    reactome_pathway_df = filter_gsea_results(
-        REACTOME_GSEA,
-        REACTOME,
         reactome_manager=reactome_manager,
-        p_value=p_value,
-        absolute_nes_filter=absolute_nes_filter,
-        geneset_set_filter_minimum_size=geneset_set_filter_minimum_size,
-        geneset_set_filter_maximum_size=geneset_set_filter_maximum_size
-
-    )
-    wikipathways_pathway_df = filter_gsea_results(
-        WIKIPATHWAYS_GSEA,
-        WIKIPATHWAYS,
         wikipathways_manager=wikipathways_manager,
         p_value=p_value,
         absolute_nes_filter=absolute_nes_filter,
         geneset_set_filter_minimum_size=geneset_set_filter_minimum_size,
-        geneset_set_filter_maximum_size=geneset_set_filter_maximum_size
+        geneset_set_filter_maximum_size=geneset_set_filter_maximum_size,
+    )
+    reactome_pathway_df = filter_gsea_results(
+        reactome_gsea_path,
+        REACTOME,
+        kegg_manager=kegg_manager,
+        reactome_manager=reactome_manager,
+        wikipathways_manager=wikipathways_manager,
+        p_value=p_value,
+        absolute_nes_filter=absolute_nes_filter,
+        geneset_set_filter_minimum_size=geneset_set_filter_minimum_size,
+        geneset_set_filter_maximum_size=geneset_set_filter_maximum_size,
+
+    )
+    wikipathways_pathway_df = filter_gsea_results(
+        wikipathways_gsea_path,
+        WIKIPATHWAYS,
+        kegg_manager=kegg_manager,
+        reactome_manager=reactome_manager,
+        wikipathways_manager=wikipathways_manager,
+        p_value=p_value,
+        absolute_nes_filter=absolute_nes_filter,
+        geneset_set_filter_minimum_size=geneset_set_filter_minimum_size,
+        geneset_set_filter_maximum_size=geneset_set_filter_maximum_size,
     )
     merged_pathway_df = filter_gsea_results(
-        MERGE_GSEA,
+        merge_gsea_path,
         MERGED_GENESET,
         kegg_manager=kegg_manager,
         reactome_manager=reactome_manager,
@@ -323,19 +325,26 @@ def gsea_results_to_filtered_df(
         p_value=p_value,
         absolute_nes_filter=absolute_nes_filter,
         geneset_set_filter_minimum_size=geneset_set_filter_minimum_size,
-        geneset_set_filter_maximum_size=geneset_set_filter_maximum_size
+        geneset_set_filter_maximum_size=geneset_set_filter_maximum_size,
     )
 
     # Merge pathway dataframe without applying filters
     merged_total_df = filter_gsea_results(
-        MERGE_GSEA,
+        merge_gsea_path,
         MERGED_GENESET,
         kegg_manager=kegg_manager,
         reactome_manager=reactome_manager,
-        wikipathways_manager=wikipathways_manager
+        wikipathways_manager=wikipathways_manager,
+        # TODO why not give arguments for other parts?
     )
 
-    return kegg_pathway_df, reactome_pathway_df, wikipathways_pathway_df, merged_pathway_df, merged_total_df
+    return (
+        kegg_pathway_df,
+        reactome_pathway_df,
+        wikipathways_pathway_df,
+        merged_pathway_df,
+        merged_total_df,
+    )
 
 
 def get_pairwise_mapping_numbers(
@@ -356,7 +365,7 @@ def get_pairwise_mapping_numbers(
     final_df = pd.concat([dfs[0], dfs[1], dfs[2]])
 
     equivalent_mappings_dict = get_mapping_dict(final_df, 'equivalentTo')
-    part_of_mappings_dict = get_mapping_dict(final_df, 'isPartOf')
+    part_of_mappings_dict = get_mapping_dict(final_df, 'isPartOf')  # FIXME why isn't this used?
 
     actual_mappings = {}
     expected_mappings = {}
@@ -472,7 +481,6 @@ def check_merged_pathways_for_matches(merged_pathways, pathway_id):
             if 1 == len(pathway_ids):
                 print(pathway_ids)
             return pathway_ids
-    return None
 
 
 def check_pathway_ids(source_df, source, merged_pathways_list, mappings_dict):
@@ -490,15 +498,20 @@ def check_pathway_ids(source_df, source, merged_pathways_list, mappings_dict):
     return pathways_with_matches
 
 
-def run_ssgsea(filtered_expression_data, gene_set, output_dir=SSGSEA, processes=1):
+def run_ssgsea(
+        filtered_expression_data: pd.DataFrame,
+        gene_set: str,
+        output_dir: str = SSGSEA,
+        processes: int = 1,
+) -> SingleSampleGSEA:
     """Run single sample GSEA (ssGSEA) on filtered gene expression data set.
 
-    :param pandas.core.frame.DataFrame expression_data: filtered gene expression values for samples
-    :param str gmt_file: .gmt file containing gene sets
+    :param filtered_expression_data: filtered gene expression values for samples
+    :param gene_set: .gmt file containing gene sets
     :param output_dir: output directory
     :return: ssGSEA results in respective directory
     """
-    ssgsea_result = gseapy.ssgsea(
+    single_sample_gsea = gseapy.ssgsea(
         data=filtered_expression_data,
         gene_sets=gene_set,
         outdir=output_dir,  # do not write output to disk
@@ -506,19 +519,20 @@ def run_ssgsea(filtered_expression_data, gene_set, output_dir=SSGSEA, processes=
         sample_norm_method='rank',  # choose 'custom' for your own rank list
         permutation_num=0,  # skip permutation procedure, because you don't need it
         no_plot=True,  # skip plotting to speed up
-        processes=processes, format='png'
+        processes=processes,
+        format='png',
     )
     log.info('Done with ssGSEA')
-    return ssgsea_result
+    return single_sample_gsea
 
 
-def filter_gene_exp_data(expression_data, gmt_file):
+def filter_gene_exp_data(expression_data: pd.DataFrame, gmt_file: str):
     """Filter gene expression data file to include only gene names which are found in the gene set files.
 
-    :param pandas.core.frame.DataFrame expression_data: gene expression values for samples
-    :param str gmt_file: .gmt file containing gene sets
+    :param expression_data: gene expression values for samples
+    :param gmt_file: .gmt file containing gene sets
     :return: Filtered gene expression data with genes with no correspondences in gene sets removed
-    :rtype: pandas.core.frame.DataFramekegg_xml_parser.py
+    :rtype: pandas.core.frame.DataFrame kegg_xml_parser.py
     """
     filtered_expression_data = expression_data.copy()
 
@@ -527,15 +541,12 @@ def filter_gene_exp_data(expression_data, gmt_file):
 
     gene_universe = set(itt.chain(*gene_sets.values()))
 
-    counter = 0
-
-    genes_to_remove = list()
-
-    for gene in filtered_expression_data.index.values:
-
-        if gene not in gene_universe:
-            genes_to_remove.append(gene)
-            counter += 1
+    genes_to_remove = [
+        gene
+        for gene in filtered_expression_data.index.values
+        if gene not in gene_universe
+    ]
+    counter = len(genes_to_remove)
 
     log.info(f'Expression data has {len(filtered_expression_data.index.values)}')
     log.info(f'Gene universe has {len(gene_universe)}')

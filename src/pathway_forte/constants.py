@@ -8,15 +8,19 @@ import time
 
 log = logging.getLogger(__name__)
 
-timestr = time.strftime("%d_%m_%Y")
-
 dir_path = os.path.dirname(os.path.realpath(__file__))
 SOURCE = os.path.join(os.path.abspath(os.path.join(dir_path, os.pardir)))
 DATA = os.path.join(os.path.abspath(os.path.join(SOURCE, os.pardir)), 'data')
 
 """Cancer Data Sets"""
 
-CANCER_DATA_SETS = {'brca', 'lihc', 'kirc', 'prad', 'ov'}
+CANCER_DATA_SETS = {
+    'brca',
+    'lihc',
+    'kirc',
+    'prad',
+    'ov',
+}
 
 TCGA_DATASETS = os.path.join(DATA, 'tcga_datasets')
 EXPRESSION_MATRIX = os.path.join(TCGA_DATASETS, '{}', 'expression_matrix_full.txt')
@@ -150,10 +154,11 @@ def check_gmt_files():
 
 KEGG_GENE_SETS, REACTOME_GENE_SETS, WIKIPATHWAYS_GENE_SETS, MERGED_GENE_SETS = check_gmt_files()
 
-NEW_KEGG_GENE_SETS = os.path.join(GMT_FOLDER, 'kegg_geneset{}.gmt'.format(timestr))
-NEW_REACTOME_GENE_SETS = os.path.join(GMT_FOLDER, 'reactome_geneset{}.gmt'.format(timestr))
-NEW_WIKIPATHWAYS_GENE_SETS = os.path.join(GMT_FOLDER, 'wikipathways_geneset{}.gmt'.format(timestr))
-NEW_MERGED_GENE_SETS = os.path.join(GMT_FOLDER, 'merged_geneset{}.gmt'.format(timestr))
+TODAY = time.strftime("%d_%m_%Y")
+NEW_KEGG_GENE_SETS = os.path.join(GMT_FOLDER, f'kegg_geneset{TODAY}.gmt')
+NEW_REACTOME_GENE_SETS = os.path.join(GMT_FOLDER, f'reactome_geneset{TODAY}.gmt')
+NEW_WIKIPATHWAYS_GENE_SETS = os.path.join(GMT_FOLDER, f'wikipathways_geneset{TODAY}.gmt')
+NEW_MERGED_GENE_SETS = os.path.join(GMT_FOLDER, f'merged_geneset{TODAY}.gmt')
 
 TEMPORAL_KEGG_PATHWAY_GENESET_CSV = os.path.join(GMT_FOLDER, 'kegg_pathway_geneset.csv')
 TEMPORAL_REACTOME_PATHWAY_GENESET_CSV = os.path.join(GMT_FOLDER, 'reactome_pathway_geneset.csv')

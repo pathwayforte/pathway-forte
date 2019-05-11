@@ -4,7 +4,7 @@
 
 import logging
 import os
-from typing import Optional
+from typing import Optional, Union, List
 
 import gseapy
 import numpy as np
@@ -18,7 +18,7 @@ from pathway_forte.constants import CLASSIFIER_RESULTS
 
 __all__ = [
     'ssgsea_nes_to_df',
-    'get_parameter_values',
+    'get_l1_ratios',
     'train_elastic_net_model',
 ]
 
@@ -78,7 +78,7 @@ def ssgsea_nes_to_df(ssgsea_scores_csv, classes_file, removed_random: Optional[i
     return pathways_array, class_labels
 
 
-def get_parameter_values():
+def get_l1_ratios():
     """Return a list of values that are used by the elastic net as hyperparameters."""
     return [
         i / 100
@@ -96,7 +96,7 @@ def train_elastic_net_model(
         y,
         outer_cv_splits: int,
         inner_cv_splits: int,
-        hyperparameter_space,
+        l1_ratio: List[float],
         model_name: str,
         max_iter: Optional[int] = None,
         export: bool = True,
@@ -108,7 +108,7 @@ def train_elastic_net_model(
     :param list y: class labels of samples
     :param outer_cv_splits: number of folds for cross validation split in outer loop
     :param inner_cv_splits: number of folds for cross validation split in inner loop
-    :param list hyperparameter_space: list of hyperparameters for l1 and l2 priors
+    :param l1_ratio: list of hyper-parameters for l1 and l2 priors
     :param model_name: name of the model
     :param max_iter: default to 1000 to ensure convergence
     :param export: Export the models using :mod:`joblib`
@@ -120,7 +120,7 @@ def train_elastic_net_model(
         y=y,
         outer_cv_splits=outer_cv_splits,
         inner_cv_splits=inner_cv_splits,
-        hyperparameter_space=hyperparameter_space,
+        l1_ratio=l1_ratio,
         max_iter=max_iter,
     )
     for i, (glm_elastic, y_test, y_pred) in enumerate(it):
@@ -139,7 +139,7 @@ def _help_train_elastic_net_model(
         y,
         outer_cv_splits: int,
         inner_cv_splits: int,
-        hyperparameter_space,
+        l1_ratio: Union[float, List[float]],
         max_iter: Optional[int] = None,
 ):
     max_iter = max_iter or 1000
@@ -157,7 +157,7 @@ def _help_train_elastic_net_model(
 
         # Instantiate the model fitting along a regularization path (CV).
         # Inner loop
-        glm_elastic = ElasticNetCV(hyperparameter_space, cv=inner_cv_splits, max_iter=max_iter)
+        glm_elastic = ElasticNetCV(l1_ratio=l1_ratio, cv=inner_cv_splits, max_iter=max_iter)
         glm_elastic.fit(x_train, y_train)
         y_pred = glm_elastic.predict(x_test)
         yield glm_elastic, y_test, y_pred
