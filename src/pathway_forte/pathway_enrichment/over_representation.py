@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
 """This module contains the functions to run Over Representation Analysis (ORA)."""
+
 import logging
+from typing import Set
 
 import numpy as np
 import pandas as pd
@@ -13,7 +15,7 @@ from pathway_forte.constants import FC_COLUMNS, FOLD_CHANGE, GENE_SYMBOL
 log = logging.getLogger(__name__)
 
 
-def read_fold_change_df(file):
+def read_fold_change_df(file) -> pd.DataFrame:
     """Read csv with gene names, fold changes and their pvalues."""
     df = pd.read_csv(file)
 
@@ -24,9 +26,9 @@ def read_fold_change_df(file):
     return df
 
 
-def filter_fold_change_fd(df, p_value=False):
+def filter_fold_change_fd(df, p_value=False, fold_change_cutoff=2):
     """Return significantly differentially expressed genes in fold change df."""
-    query_exp = f'({FOLD_CHANGE} <= -2 | {FOLD_CHANGE} >= 2)'
+    query_exp = f'({FOLD_CHANGE} <= -{fold_change_cutoff} | {FOLD_CHANGE} >= {fold_change_cutoff})'
 
     # Apply p_value threshold too
     if p_value:
@@ -37,13 +39,12 @@ def filter_fold_change_fd(df, p_value=False):
     return set(filtered_df[GENE_SYMBOL])
 
 
-def _prepare_hypergeometric_test(query_gene_set, pathway_gene_set, gene_universe):
+def _prepare_hypergeometric_test(query_gene_set: Set[str], pathway_gene_set: Set[str], gene_universe: int) -> np.ndarray:
     """Prepare the matrix for hypergeometric test calculations.
 
-    :param set[str] query_gene_set: gene set to test against pathway
-    :param set[str] pathway_gene_set: pathway gene set
-    :param int gene_universe: number of HGNC symbols
-    :rtype: numpy.ndarray
+    :param query_gene_set: gene set to test against pathway
+    :param pathway_gene_set: pathway gene set
+    :param gene_universe: number of HGNC symbols
     :return: 2x2 matrix
     """
     # Cast lists to sets
@@ -52,23 +53,28 @@ def _prepare_hypergeometric_test(query_gene_set, pathway_gene_set, gene_universe
     if not isinstance(pathway_gene_set, set):
         pathway_gene_set = set(pathway_gene_set)
 
-    return np.array(
-        [[len(query_gene_set.intersection(pathway_gene_set)),
-          len(query_gene_set.difference(pathway_gene_set))
-          ],
-         [len(pathway_gene_set.difference(query_gene_set)),
-          gene_universe - len(pathway_gene_set.union(query_gene_set))
-          ]
-         ]
-    )
+    return np.array([
+        [
+            len(query_gene_set.intersection(pathway_gene_set)),
+            len(query_gene_set.difference(pathway_gene_set)),
+        ],
+        [
+            len(pathway_gene_set.difference(query_gene_set)),
+            gene_universe - len(pathway_gene_set.union(query_gene_set)),
+        ],
+    ])
 
 
 def perform_hypergeometric_test(
-        genes_to_test, pathway_dict, gene_universe=41714, apply_threshold=False, threshold=0.01
+        genes_to_test: Set[str], 
+        pathway_dict, 
+        gene_universe=41714, 
+        apply_threshold=False, 
+        threshold=0.01,
 ):
     """Perform hypergeometric tests.
 
-    :param set[str] genes_to_test: gene set to test against pathway
+    :param genes_to_test: gene set to test against pathway
     :param dict[str,set] pathway_dict: pathway name to gene set
     :param int gene_universe: number of HGNC symbols
     :param Optional[bool] apply_threshold: return only significant pathways
@@ -96,9 +102,7 @@ def perform_hypergeometric_test(
 
     # Update original dict with p value corrections
     for i, pathway_id in enumerate(manager_pathway_id):
-
-        q_value = round(q_values[i], 4)
-        results[pathway_id] = q_value
+        results[pathway_id] = q_value = round(q_values[i], 4)
 
         # [Optional] Delete the pathway if does not pass the threshold
         if apply_threshold and q_value > threshold:
