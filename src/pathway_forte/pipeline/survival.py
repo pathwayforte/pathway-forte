@@ -1,0 +1,43 @@
+# -*- coding: utf-8 -*-
+
+""""""
+
+import logging
+import os
+import pickle
+
+from pathway_forte.constants import CLASSIFIER_RESULTS, SSGSEA
+from pathway_forte.prediction.binary import get_l1_ratios
+from pathway_forte.prediction.survival import run_survival_all_datasets
+
+__all__ = [
+    'do_survival_prediction',
+]
+
+logger = logging.getLogger(__name__)
+
+
+def do_survival_prediction(
+        data,
+        *,
+        outer_cv_splits,
+        inner_cv_splits,
+):
+    param_grid = {
+        'l1_ratio': get_l1_ratios(),
+    }
+    logger.info(f'Parameter grid: {param_grid}')
+
+    results = run_survival_all_datasets(
+        os.path.join(SSGSEA, data),
+        outer_cv_splits=outer_cv_splits,
+        inner_cv_splits=inner_cv_splits,
+        param_grid=param_grid,
+    )
+    logger.info(results)
+
+    results_path = os.path.join(CLASSIFIER_RESULTS, f'survival_results_{data}.pickle')
+
+    with open(results_path, 'wb') as file:
+        pickle.dump(results, file)
+    logger.info(f'Done with survival analysis. Results are exported in {results_path}')

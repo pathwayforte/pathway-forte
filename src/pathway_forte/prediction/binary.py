@@ -4,7 +4,7 @@
 
 import logging
 import os
-from typing import Optional, Union, List
+from typing import List, Optional, Union
 
 import gseapy
 import numpy as np

@@ -3,6 +3,7 @@
 """This module contain the functional class methods implemented in PathwayForte. For now, GSEA and ssGSEA"""
 
 import itertools as itt
+import os
 from typing import Optional
 
 import bio2bel_kegg
@@ -12,7 +13,9 @@ import gseapy
 import pandas as pd
 from gseapy.gsea import SingleSampleGSEA
 
-from pathway_forte.constants import *
+from pathway_forte.constants import (
+    CLASSES, GSEA, KEGG, MERGED_GENESET, PHENOTYPE_CLASSES, REACTOME, SSGSEA, WIKIPATHWAYS,
+)
 from pathway_forte.mappings import get_mapping_dict, load_compath_mapping_dfs
 from pathway_forte.pathway_enrichment.over_representation import log
 from pathway_forte.utils import get_num_samples

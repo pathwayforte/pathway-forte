@@ -5,7 +5,6 @@
 [flake8]
 ignore = 
 	E501
-	F405 # Stars import
 	F403 # imports not used in init
 	F401 # imports not used in init
 	C901 # too complex methods

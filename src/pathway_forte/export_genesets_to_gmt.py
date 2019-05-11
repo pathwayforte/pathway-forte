@@ -4,6 +4,7 @@
 
 import itertools as itt
 import logging
+import os
 
 import bio2bel_kegg
 import bio2bel_reactome
@@ -11,7 +12,12 @@ import bio2bel_wikipathways
 import pandas as pd
 from compath_utils import CompathManager
 
-from pathway_forte.constants import *
+from pathway_forte.constants import (
+    GENESET_COLUMN_NAMES, KEGG, MERGED_GENESET, NEW_KEGG_GENE_SETS, NEW_MERGED_GENE_SETS, NEW_REACTOME_GENE_SETS,
+    NEW_WIKIPATHWAYS_GENE_SETS, PATHWAY_ID, REACTOME, RESOURCE, TEMP_KEGG_PATHWAY_GENESET_CSV,
+    TEMP_MERGED_PATHWAY_GENESET_CSV, TEMP_REACTOME_PATHWAY_GENESET_CSV,
+    TEMP_WIKIPATHWAYS_PATHWAY_GENESET_CSV, WIKIPATHWAYS,
+)
 
 __all__ = [
     'get_all_pathway_genesets',
@@ -107,7 +113,7 @@ def create_geneset_df(all_pathway_genesets, mappings_dict):
             resource_id_cell = [database]
 
             for (mapping_resource, pathway_mapping_id) in mappings_dict[(database, pathway_id)]:
-                equivalent_mapping_genesets = all_pathway_genesets[(mapping_resource, pathway_mapping_id)]
+                equivalent_mapping_genesets = all_pathway_genesets[mapping_resource, pathway_mapping_id]
 
                 row_dict[GENESET_COLUMN_NAMES[mapping_resource]] = equivalent_mapping_genesets
 
@@ -193,19 +199,19 @@ def export_gmt_files(df: pd.DataFrame):
     wikipathways_df = _remove_equivalence_in_df(df, WIKIPATHWAYS)
     merged_geneset_df = df[[PATHWAY_ID, RESOURCE, MERGED_GENESET]]
 
-    kegg_df.to_csv(TEMPORAL_KEGG_PATHWAY_GENESET_CSV, header=False, index=False, sep='\t', encoding='utf-8')
-    reactome_df.to_csv(TEMPORAL_REACTOME_PATHWAY_GENESET_CSV, header=False, index=False, sep='\t', encoding='utf-8')
-    wikipathways_df.to_csv(TEMPORAL_WIKIPATHWAYS_PATHWAY_GENESET_CSV, header=False, index=False, sep='\t', encoding='utf-8'
-    )
-    merged_geneset_df.to_csv(TEMPORAL_MERGED_PATHWAY_GENESET_CSV, header=False, index=False, sep='\t', encoding='utf-8')
+    # TODO replace these temp paths with proper usage of tempfile
+    kegg_df.to_csv(TEMP_KEGG_PATHWAY_GENESET_CSV, header=False, index=False, sep='\t', encoding='utf-8')
+    reactome_df.to_csv(TEMP_REACTOME_PATHWAY_GENESET_CSV, header=False, index=False, sep='\t', encoding='utf-8')
+    wikipathways_df.to_csv(TEMP_WIKIPATHWAYS_PATHWAY_GENESET_CSV, header=False, index=False, sep='\t', encoding='utf-8')
+    merged_geneset_df.to_csv(TEMP_MERGED_PATHWAY_GENESET_CSV, header=False, index=False, sep='\t', encoding='utf-8')
 
-    _filter_geneset_file(TEMPORAL_KEGG_PATHWAY_GENESET_CSV, NEW_KEGG_GENE_SETS)
-    _filter_geneset_file(TEMPORAL_REACTOME_PATHWAY_GENESET_CSV, NEW_REACTOME_GENE_SETS)
-    _filter_geneset_file(TEMPORAL_WIKIPATHWAYS_PATHWAY_GENESET_CSV, NEW_WIKIPATHWAYS_GENE_SETS)
-    _filter_geneset_file(TEMPORAL_MERGED_PATHWAY_GENESET_CSV, NEW_MERGED_GENE_SETS)
+    _filter_geneset_file(TEMP_KEGG_PATHWAY_GENESET_CSV, NEW_KEGG_GENE_SETS)
+    _filter_geneset_file(TEMP_REACTOME_PATHWAY_GENESET_CSV, NEW_REACTOME_GENE_SETS)
+    _filter_geneset_file(TEMP_WIKIPATHWAYS_PATHWAY_GENESET_CSV, NEW_WIKIPATHWAYS_GENE_SETS)
+    _filter_geneset_file(TEMP_MERGED_PATHWAY_GENESET_CSV, NEW_MERGED_GENE_SETS)
 
     # Remove intermediate csv file as .gmt file contains all genesets and is sole file needed
-    os.remove(TEMPORAL_KEGG_PATHWAY_GENESET_CSV)
-    os.remove(TEMPORAL_REACTOME_PATHWAY_GENESET_CSV)
-    os.remove(TEMPORAL_WIKIPATHWAYS_PATHWAY_GENESET_CSV)
-    os.remove(TEMPORAL_MERGED_PATHWAY_GENESET_CSV)
+    os.remove(TEMP_KEGG_PATHWAY_GENESET_CSV)
+    os.remove(TEMP_REACTOME_PATHWAY_GENESET_CSV)
+    os.remove(TEMP_WIKIPATHWAYS_PATHWAY_GENESET_CSV)
+    os.remove(TEMP_MERGED_PATHWAY_GENESET_CSV)

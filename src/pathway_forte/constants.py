@@ -160,10 +160,10 @@ NEW_REACTOME_GENE_SETS = os.path.join(GMT_FOLDER, f'reactome_geneset{TODAY}.gmt'
 NEW_WIKIPATHWAYS_GENE_SETS = os.path.join(GMT_FOLDER, f'wikipathways_geneset{TODAY}.gmt')
 NEW_MERGED_GENE_SETS = os.path.join(GMT_FOLDER, f'merged_geneset{TODAY}.gmt')
 
-TEMPORAL_KEGG_PATHWAY_GENESET_CSV = os.path.join(GMT_FOLDER, 'kegg_pathway_geneset.csv')
-TEMPORAL_REACTOME_PATHWAY_GENESET_CSV = os.path.join(GMT_FOLDER, 'reactome_pathway_geneset.csv')
-TEMPORAL_WIKIPATHWAYS_PATHWAY_GENESET_CSV = os.path.join(GMT_FOLDER, 'wikipathways_pathway_geneset.csv')
-TEMPORAL_MERGED_PATHWAY_GENESET_CSV = os.path.join(GMT_FOLDER, 'merged_pathway_geneset.csv')
+TEMP_KEGG_PATHWAY_GENESET_CSV = os.path.join(GMT_FOLDER, 'kegg_pathway_geneset.csv')
+TEMP_REACTOME_PATHWAY_GENESET_CSV = os.path.join(GMT_FOLDER, 'reactome_pathway_geneset.csv')
+TEMP_WIKIPATHWAYS_PATHWAY_GENESET_CSV = os.path.join(GMT_FOLDER, 'wikipathways_pathway_geneset.csv')
+TEMP_MERGED_PATHWAY_GENESET_CSV = os.path.join(GMT_FOLDER, 'merged_pathway_geneset.csv')
 
 MSIGDB_KEGG_GENE_SETS = os.path.join(GMT_FOLDER, 'msigdb_kegg.gmt')
 MSIGDB_REACTOME_GENE_SETS = os.path.join(GMT_FOLDER, 'msigdb_reactome.gmt')

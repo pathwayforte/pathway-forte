@@ -8,7 +8,8 @@ from collections import Counter
 
 import pandas as pd
 
-from pathway_forte.mappings import load_compath_mapping_dfs, get_mapping_dict, check_gmt_files
+from pathway_forte.constants import check_gmt_files
+from pathway_forte.mappings import get_mapping_dict, load_compath_mapping_dfs
 
 logger = logging.getLogger(__name__)
 
@@ -22,9 +23,7 @@ BLACK_LIST = {
 
 
 class TestMergeGmt(unittest.TestCase):
-
     def test_gmt_file(self):
-
         kegg_reactome_df, kegg_wikipathways_df, wikipathways_reactome_df, special_mappings_df = load_compath_mapping_dfs()
 
         equivalent_mappings_dict = get_mapping_dict(
@@ -34,12 +33,11 @@ class TestMergeGmt(unittest.TestCase):
 
         _, _, _, merge_gene_set = check_gmt_files()
 
-        with open(merge_gene_set) as f:
-            content = f.readlines()
+        with open(merge_gene_set) as file:
             # Get the two first cells in each row (pathway ids and resources)
             pathway_tuples = [
                 line.split('\t')[0:2]
-                for line in content
+                for line in file
             ]
 
         # Zip ids and resources to a common
@@ -71,11 +69,11 @@ class TestMergeGmt(unittest.TestCase):
 
                 self.assertEqual(set(mapping_pathways_in_iteration), set(real_mappings))
 
-        counter = Counter([
+        counter = Counter(
             pathway
             for pathways in pathways_mapped
             for resource, pathway in pathways
-        ])
+        )
 
         # All pathways should be only present once. Check for duplicates
         for pathway, count in counter.items():

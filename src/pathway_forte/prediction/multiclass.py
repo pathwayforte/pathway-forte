@@ -85,8 +85,9 @@ PARAM_GRID = {
 def train_multiclass_svm(
         x,
         y,
-        inner_cv: int,
-        outer_cv: int,
+        *,
+        inner_cv_splits: int,
+        outer_cv_splits: int,
         chain_pca: bool = False,
         explained_variance: Optional[float] = None,
 ):
@@ -95,8 +96,8 @@ def train_multiclass_svm(
 
     :param Numpy.ndarray x: 2D array of pathway scores and samples
     :param Numpy.ndarray y: 1D array of sample subtype labels
-    :param inner_cv: number of folds for cross validation split in inner loop
-    :param outer_cv: number of folds for cross validation split in outer loop
+    :param inner_cv_splits: number of folds for cross validation split in inner loop
+    :param outer_cv_splits: number of folds for cross validation split in outer loop
     :param chain_pca: chain PCA to classifier
     :param explained_variance: amount of variance retained. Defaults to 0.95.
     :return:
@@ -106,7 +107,13 @@ def train_multiclass_svm(
 
     target_names = ['Class 0', 'Class 1', 'Class 2', 'Class 3']
 
-    it = _help_train_multiclass_svm(x, y, inner_cv, outer_cv, chain_pca, explained_variance)
+    it = _help_train_multiclass_svm(
+        x, y,
+        inner_cv_splits=inner_cv_splits,
+        outer_cv_splits=outer_cv_splits,
+        chain_pca=chain_pca,
+        explained_variance=explained_variance,
+    )
     for i, (classifier, y_test, y_pred) in enumerate(it, start=1):
         # Get the subset accuracy st labels predicted for a sample exactly match true labels (harsh)
         accuracy = metrics.accuracy_score(y_test, y_pred)  # set sample_weight to get weighted accuracy
@@ -126,8 +133,9 @@ def train_multiclass_svm(
 def _help_train_multiclass_svm(
         x,
         y,
-        inner_cv: int,
-        outer_cv: int,
+        *,
+        inner_cv_splits: int,
+        outer_cv_splits: int,
         chain_pca: bool = False,
         explained_variance: Optional[float] = None,
 ):
@@ -136,15 +144,15 @@ def _help_train_multiclass_svm(
 
     :param Numpy.ndarray x: 2D array of pathway scores and samples
     :param Numpy.ndarray y: 1D array of sample subtype labels
-    :param inner_cv: number of folds for cross validation split in inner loop
-    :param outer_cv: number of folds for cross validation split in outer loop
+    :param inner_cv_splits: number of folds for cross validation split in inner loop
+    :param outer_cv_splits: number of folds for cross validation split in outer loop
     :param chain_pca: chain PCA to classifier
     :param explained_variance: amount of variance retained
     :return:
     """
     explained_variance = explained_variance or 0.95
 
-    kf = KFold(n_splits=outer_cv, shuffle=True)
+    kf = KFold(n_splits=outer_cv_splits, shuffle=True)
 
     iterator = tqdm(kf.split(x, y))
 
@@ -161,7 +169,7 @@ def _help_train_multiclass_svm(
         # For each classifier, class is fit against all other classes
         svm = OneVsOneClassifier(SVC(gamma='scale'))
 
-        classifier = GridSearchCV(estimator=svm, param_grid=PARAM_GRID, cv=inner_cv)
+        classifier = GridSearchCV(estimator=svm, param_grid=PARAM_GRID, cv=inner_cv_splits)
         classifier.fit(x_train, y_train)
 
         y_pred = classifier.predict(x_test)

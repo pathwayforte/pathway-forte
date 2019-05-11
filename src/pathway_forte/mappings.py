@@ -79,13 +79,17 @@ def get_equivalent_pairs(df: pd.DataFrame):
 
 
 def load_compath_mapping_dfs() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Load ComPath mappings dfs"""
+    """Load ComPath mappings dataframes."""
     kegg_reactome_df = pd.read_csv(KEGG_REACTOME_URL)
     kegg_wikipathways_df = pd.read_csv(KEGG_WP_URL)
     wikipathways_reactome_df = pd.read_csv(WP_REACTOME_URL)
     special_mappings_df = pd.read_csv(SPECIAL_MAPPINGS_URL)
-
-    return kegg_reactome_df, kegg_wikipathways_df, wikipathways_reactome_df, special_mappings_df
+    return (
+        kegg_reactome_df,
+        kegg_wikipathways_df,
+        wikipathways_reactome_df,
+        special_mappings_df,
+    )
 
 
 def get_equivalent_mappings_dict():

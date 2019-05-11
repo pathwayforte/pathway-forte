@@ -8,9 +8,7 @@ import unittest
 from gseapy.parser import gsea_gmt_parser
 
 from pathway_forte.pathway_enrichment.over_representation import (
-    read_fold_change_df,
-    filter_fold_change_fd,
-    perform_hypergeometric_test
+    filter_fold_change_fd, perform_hypergeometric_test, read_fold_change_df,
 )
 
 TEST_FOLDER = os.path.dirname(os.path.realpath(__file__))
@@ -19,6 +17,7 @@ FOLD_CHANGES_EXAMPLE = os.path.join(TEST_FOLDER, 'data', 'example_fold_changes.c
 
 
 class TestOra(unittest.TestCase):
+    """Test over-enrichment analysis functions."""
 
     def test_get_df(self):
         """Test getting the genes out of the csv file."""
@@ -33,7 +32,7 @@ class TestOra(unittest.TestCase):
         enriched_pathways = perform_hypergeometric_test(
             significant_genes,
             gene_sets,
-            apply_threshold=True
+            apply_threshold=True,
         )
 
         self.assertEqual(len(enriched_pathways.keys()), 1)

@@ -198,9 +198,9 @@ def train_survival_model(
 
 
 def run_survival_all_datasets(
-        path,
-        outer_cv_splits,
-        inner_cv_splits,
+        path: str,
+        outer_cv_splits: int,
+        inner_cv_splits: int,
         param_grid,
 ):
     results = {}
