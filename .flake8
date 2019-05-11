@@ -1,14 +1,10 @@
 #########################
 # Flake8 Configuration  #
 # (.flake8)             #
-# (formerly in tox.ini) #
 #########################
-
 [flake8]
 ignore = 
 	E501
-	I100  # Import statements are in the wrong order
-	I101  # Imported names are in the wrong order
 	F405 # Stars import
 	F403 # imports not used in init
 	F401 # imports not used in init
@@ -27,5 +23,6 @@ exclude =
     .eggs
 max-complexity = 10
 import-order-style = pycharm
-application-import-names = pathme
+application-import-names =
+    pathway_forte
 format = ${cyan}%(path)s${reset}:${yellow_bold}%(row)d${reset}:${green_bold}%(col)d${reset}: ${red_bold}%(code)s${reset} %(text)s

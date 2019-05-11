@@ -11,18 +11,16 @@ from gseapy.parser import gsea_gmt_parser
 from pathway_forte.export_genesets_to_gmt import *
 from pathway_forte.mappings import *
 from pathway_forte.pathway_enrichment.functional_class import (
-    create_cls_file,
-    run_gsea,
-    run_ssgsea,
-    filter_gene_exp_data,
+    create_cls_file, filter_gene_exp_data, run_gsea, run_ssgsea,
 )
 from pathway_forte.pathway_enrichment.over_representation import (
-    read_fold_change_df,
-    filter_fold_change_fd,
-    perform_hypergeometric_test
+    filter_fold_change_fd, perform_hypergeometric_test, read_fold_change_df,
 )
 from pathway_forte.prediction.binary import get_parameter_values, ssgsea_nes_to_df, train_elastic_net_model
-from pathway_forte.prediction.multiclass import *
+from pathway_forte.prediction.multiclass import (
+    get_class_labels, get_sample_ids_with_cancer_subtypes, match_samples,
+    stabilize_ssgsea_scores_df, train_multiclass_svm,
+)
 from pathway_forte.prediction.survival import run_survival_all_datasets
 from pathway_forte.utils import plot_aucs
 
@@ -80,7 +78,11 @@ def export():
     wikipathways_gene_set = get_compath_genesets(WIKIPATHWAYS, wikipathways_manager)
 
     # Get ComPath/Bio2BEL genesets for each pathway, from each database
-    all_pathway_genesets = {**kegg_gene_set, **reactome_gene_set, **wikipathways_gene_set}
+    all_pathway_genesets = {
+        **kegg_gene_set,
+        **reactome_gene_set,
+        **wikipathways_gene_set,
+    }
 
     df = create_geneset_df(all_pathway_genesets, equivalent_mappings_dict)
 
@@ -154,41 +156,29 @@ def gsea(data, permutations):
     num_normal_samples = NORMAL_EXPRESSION_SAMPLES.format(data)
     num_tumor_samples = TUMOR_EXPRESSION_SAMPLES.format(data)
 
-    kegg_gene_set, reactome_gene_set, wikipathways_gene_set, merge_gene_set = check_gmt_files()
+    phenotype_path = PHENOTYPE_CLASSES.format(data)
 
-    if not os.path.isfile(PHENOTYPE_CLASSES.format(data)):
+    if not os.path.isfile(phenotype_path):
         logger.info('Creating cls file')
         create_cls_file(gene_exp, num_normal_samples, num_tumor_samples, data)
 
-    PHENOTYPE = PHENOTYPE_CLASSES.format(data)
-
-    logger.info('Running KEGG')
-    kegg_gsea_results = run_gsea(
-        gene_exp, kegg_gene_set, PHENOTYPE, permutations=permutations, output_dir=KEGG_GSEA
-    )
-
-    kegg_gsea_results.res2d.to_csv(KEGG_GSEA_TSV.format(data, date_today), sep='\t')
-
-    logger.info('Running Reactome')
-    reactome_gsea_results = run_gsea(
-        gene_exp, reactome_gene_set, PHENOTYPE, permutations=permutations, output_dir=REACTOME_GSEA
-    )
-
-    reactome_gsea_results.res2d.to_csv(REACTOME_GSEA_TSV.format(data, date_today), sep='\t')
-
-    logger.info('Running WikiPathways')
-    wikipathways_gsea_results = run_gsea(
-        gene_exp, wikipathways_gene_set, PHENOTYPE, permutations=permutations, output_dir=WIKIPATHWAYS_GSEA
-    )
-
-    wikipathways_gsea_results.res2d.to_csv(WIKIPATHWAYS_GSEA_TSV.format(data, date_today), sep='\t')
-
-    logger.info('Running MergeDataset')
-    merge_gsea_results = run_gsea(
-        gene_exp, merge_gene_set, PHENOTYPE, permutations=permutations, output_dir=MERGE_GSEA
-    )
-
-    merge_gsea_results.res2d.to_csv(MERGE_GSEA_TSV.format(data, date_today), sep='\t')
+    kegg_gene_set, reactome_gene_set, wikipathways_gene_set, merge_gene_set = check_gmt_files()
+    _ds = [
+        ('KEGG', kegg_gene_set, KEGG_GSEA, KEGG_GSEA_TSV),
+        ('Reactome', reactome_gene_set, REACTOME_GSEA, REACTOME_GSEA_TSV),
+        ('WikiPathways', wikipathways_gene_set, WIKIPATHWAYS_GSEA, WIKIPATHWAYS_GSEA_TSV),
+        ('MergeDataset', merge_gene_set, MERGE_GSEA, MERGE_GSEA_TSV),
+    ]
+    for name, gene_set, output_dir, tsv_fmt in _ds:
+        logger.info(f'Running {name}')
+        results = run_gsea(
+            gene_exp,
+            gene_set,
+            phenotype_path,
+            permutations=permutations,
+            output_dir=output_dir,
+        )
+        results.res2d.to_csv(tsv_fmt.format(data, date_today), sep='\t')
 
     logger.info('Done with GSEA analysis')
 
@@ -197,7 +187,7 @@ def gsea(data, permutations):
 @click.option('-d', '--data', type=click.Choice(CANCER_DATA_SETS), required=True, help='Name of dataset')
 def gsea_msig(data):
     """Run GSEA using MSigDB gene sets."""
-    click.echo('Running GSEA for the {} dataset'.format(data))
+    click.echo(f'Running GSEA for the {data} dataset')
     make_gsea_export_directories()
     make_ssgsea_export_directories()
 
@@ -205,33 +195,33 @@ def gsea_msig(data):
     num_normal_samples = NORMAL_EXPRESSION_SAMPLES.format(data)
     num_tumor_samples = TUMOR_EXPRESSION_SAMPLES.format(data)
 
-    if not os.path.isfile(PHENOTYPE_CLASSES.format(data)):
+    phenotype_path = PHENOTYPE_CLASSES.format(data)
+
+    if not os.path.isfile(phenotype_path):
         logger.info('Creating cls file')
         create_cls_file(gene_exp, num_normal_samples, num_tumor_samples, data)
 
-    PHENOTYPE = PHENOTYPE_CLASSES.format(data)
-
-    logger.info('Running KEGG')
+    logger.info('Running MMSIG')
     kegg_gsea_results = run_gsea(
-        gene_exp, MSIGDB_KEGG_GENE_SETS, PHENOTYPE, permutations=100, output_dir=MSIG_GSEA
+        gene_exp, MSIGDB_KEGG_GENE_SETS, phenotype_path, permutations=100, output_dir=MSIG_GSEA
     )
 
     kegg_gsea_results.res2d.to_csv(KEGG_MSIG_GSEA_TSV.format(data, date_today), sep='\t')
 
     logger.info('Running Reactome')
     reactome_gsea_results = run_gsea(
-        gene_exp, MSIGDB_REACTOME_GENE_SETS, PHENOTYPE, permutations=100, output_dir=MSIG_GSEA
+        gene_exp, MSIGDB_REACTOME_GENE_SETS, phenotype_path, permutations=100, output_dir=MSIG_GSEA
     )
     reactome_gsea_results.res2d.to_csv(REACTOME_MSIG_GSEA_TSV.format(data, date_today), sep='\t')
 
     logger.info('Running Concatenated Merge')
     conca_merge_gsea_results = run_gsea(
-        gene_exp, CONCATENATED_MERGE_GENE_SETS, PHENOTYPE, permutations=100, output_dir=MERGE_GSEA
+        gene_exp, CONCATENATED_MERGE_GENE_SETS, phenotype_path, permutations=100, output_dir=MERGE_GSEA
     )
 
     conca_merge_gsea_results.res2d.to_csv(CONCATENATED_MERGE_GSEA_TSV.format(data, date_today), sep='\t')
 
-    click.echo('Running ssGSEA for the {} dataset'.format(data))
+    click.echo(f'Running ssGSEA for the {data} dataset')
 
     logger.info('Running KEGG')
 
@@ -264,40 +254,36 @@ def gsea_msig(data):
 @click.option('-d', '--data', type=click.Choice(CANCER_DATA_SETS), required=True, help='Name of dataset')
 def ssgsea(data):
     """Run ssGSEA on TCGA data."""
-    click.echo('Running ssGSEA for the {} dataset'.format(data))
+    click.echo(f'Running ssGSEA for the {data} dataset')
 
     make_ssgsea_export_directories()
 
-    kegg_gene_set, reactome_gene_set, wikipathways_gene_set, merge_gene_set = check_gmt_files()
-
     # Read data
     gene_exp = pd.read_csv(EXPRESSION_MATRIX.format(data), sep='\t')
+
+    kegg_gene_set, reactome_gene_set, wikipathways_gene_set, merge_gene_set = check_gmt_files()
 
     # Filter data set such that only those genes which are in the gene sets are in the expression data
     filtered_expression_data = filter_gene_exp_data(gene_exp, merge_gene_set)
 
     logger.info('Running KEGG')
     kegg_ssgsea_results = run_ssgsea(filtered_expression_data, kegg_gene_set, output_dir=KEGG_SSGSEA)
-
     kegg_ssgsea_results.res2d.to_csv(KEGG_SSGSEA_TSV.format(data, date_today), sep='\t')
 
     logger.info('Running Reactome')
     reactome_ssgsea_results = run_ssgsea(filtered_expression_data, reactome_gene_set, output_dir=REACTOME_SSGSEA)
-
     reactome_ssgsea_results.res2d.to_csv(REACTOME_SSGSEA_TSV.format(data, date_today), sep='\t')
 
     logger.info('Running WikiPathways')
     wikipathways_ssgsea_results = run_ssgsea(
         filtered_expression_data, wikipathways_gene_set, output_dir=WIKIPATHWAYS_SSGSEA
     )
-
     wikipathways_ssgsea_results.res2d.to_csv(WIKIPATHWAYS_SSGSEA_TSV.format(data, date_today), sep='\t')
 
     logger.info('Running MergeDataset')
     merge_ssgsea_results = run_ssgsea(filtered_expression_data, merge_gene_set, output_dir=MERGE_SSGSEA)
-
     merge_ssgsea_results.res2d.to_csv(MERGE_SSGSEA_TSV.format(data, date_today), sep='\t')
-    #
+
     logger.info('Done with ssGSEA analysis')
 
 
@@ -321,11 +307,8 @@ def prediction():
 def binary(data, outer_cv, inner_cv, max_iterations, turn_off_warnings):
     """Train elastic net for binary prediction."""
     make_classifier_results_directory()
-    click.echo('Training Elastic Net via nested CV in the {} dataset with {} outer loops and {} inner loops'.format(
-        data,
-        outer_cv,
-        inner_cv
-    ))
+    click.echo(f'Training Elastic Net via nested CV in the {data} dataset with'
+               f' {outer_cv} outer loops and {inner_cv} inner loops')
 
     if turn_off_warnings:
         click.echo("Warnings are now turned off")
@@ -341,24 +324,32 @@ def binary(data, outer_cv, inner_cv, max_iterations, turn_off_warnings):
 
     phenotypes = PHENOTYPE_CLASSES.format(data)
 
-    KEGG_SSGSEA_NES = os.path.join(KEGG_SSGSEA, 'kegg_{}.tsv'.format(data))
-    REACTOME_SSGSEA_NES = os.path.join(REACTOME_SSGSEA, 'reactome_{}.tsv'.format(data))
-    WIKIPATHWAYS_SSGSEA_NES = os.path.join(WIKIPATHWAYS_SSGSEA, 'wikipathways_{}.tsv'.format(data))
-    MERGE_SSGSEA_NES = os.path.join(MERGE_SSGSEA, 'merge_{}.tsv'.format(data))
+    KEGG_SSGSEA_NES = os.path.join(KEGG_SSGSEA, f'kegg_{data}.tsv')
+    REACTOME_SSGSEA_NES = os.path.join(REACTOME_SSGSEA, f'reactome_{data}.tsv')
+    WIKIPATHWAYS_SSGSEA_NES = os.path.join(WIKIPATHWAYS_SSGSEA, f'wikipathways_{data}.tsv')
+    MERGE_SSGSEA_NES = os.path.join(MERGE_SSGSEA, f'merge_{data}.tsv')
 
     parameter_list = get_parameter_values()
-    click.echo('Hyperparameter list {}'.format(parameter_list))
+    click.echo(f'Hyperparameter list {parameter_list}')
 
     """KEGG"""
     click.echo('Training on KEGG')
 
     x, y = ssgsea_nes_to_df(KEGG_SSGSEA_NES, phenotypes)
 
-    aucs = train_elastic_net_model(x, y, outer_cv, inner_cv, parameter_list, "{}-{}".format(data, KEGG), max_iterations)
+    aucs = train_elastic_net_model(
+        x,
+        y,
+        outer_cv,
+        inner_cv,
+        parameter_list,
+        f"{data}-{KEGG}",
+        max_iterations,
+    )
 
     plot_aucs(aucs, data, KEGG, CLASSIFIER_RESULTS)
 
-    click.echo("KEGG AUCS: {}".format(aucs))
+    click.echo(f"KEGG AUCS: {aucs}")
 
     """Reactome"""
     click.echo('Training on Reactome')
@@ -366,10 +357,16 @@ def binary(data, outer_cv, inner_cv, max_iterations, turn_off_warnings):
     x, y = ssgsea_nes_to_df(REACTOME_SSGSEA_NES, phenotypes)
 
     aucs = train_elastic_net_model(
-        x, y, outer_cv, inner_cv, parameter_list, "{}-{}".format(data, REACTOME), max_iterations
+        x,
+        y,
+        outer_cv,
+        inner_cv,
+        parameter_list,
+        f"{data}-{REACTOME}",
+        max_iterations,
     )
 
-    click.echo("Reactome AUCS: {}".format(aucs))
+    click.echo(f"Reactome AUCS: {aucs}")
 
     plot_aucs(aucs, data, REACTOME, CLASSIFIER_RESULTS)
 
@@ -379,10 +376,16 @@ def binary(data, outer_cv, inner_cv, max_iterations, turn_off_warnings):
     x, y = ssgsea_nes_to_df(WIKIPATHWAYS_SSGSEA_NES, phenotypes)
 
     aucs = train_elastic_net_model(
-        x, y, outer_cv, inner_cv, parameter_list, "{}-{}".format(data, WIKIPATHWAYS), max_iterations
+        x,
+        y,
+        outer_cv,
+        inner_cv,
+        parameter_list,
+        f"{data}-{WIKIPATHWAYS}",
+        max_iterations,
     )
 
-    click.echo("WikiPathways AUCS: {}".format(aucs))
+    click.echo(f"WikiPathways AUCS: {aucs}")
 
     plot_aucs(aucs, data, WIKIPATHWAYS, CLASSIFIER_RESULTS)
 
@@ -391,12 +394,18 @@ def binary(data, outer_cv, inner_cv, max_iterations, turn_off_warnings):
     x, y = ssgsea_nes_to_df(MERGE_SSGSEA_NES, phenotypes)
 
     aucs = train_elastic_net_model(
-        x, y, outer_cv, inner_cv, parameter_list, "{}-{}".format(data, "MERGE"), max_iterations
+        x,
+        y,
+        outer_cv,
+        inner_cv,
+        parameter_list,
+        "{}-{}".format(data, "MERGE"),
+        max_iterations,
     )
 
     plot_aucs(aucs, data, 'MERGE', CLASSIFIER_RESULTS)
 
-    click.echo("MERGE_SSGSEA_NES AUCS: {}".format(aucs))
+    click.echo(f"MERGE_SSGSEA_NES AUCS: {aucs}")
 
 
 @prediction.command()
@@ -406,10 +415,10 @@ def binary(data, outer_cv, inner_cv, max_iterations, turn_off_warnings):
 @click.option('--turn-off-warnings', is_flag=True, help='Turns off warnings')
 def survival(data, outer_cv, inner_cv, turn_off_warnings):
     """Train survival model."""
-    click.echo('Running survival analysis for {} with: {} outer CVs and {} inner CVS'.format(data, outer_cv, inner_cv))
+    click.echo(f'Running survival analysis for {data} with: {outer_cv} outer CVs and {inner_cv} inner CVS')
 
     parameter_list = {'l1_ratio': get_parameter_values()}
-    click.echo('Hyperparameter list {}'.format(parameter_list))
+    click.echo(f'Hyperparameter list {parameter_list}')
 
     if turn_off_warnings:
         click.echo("Warnings are now turned off")
@@ -435,7 +444,7 @@ def survival(data, outer_cv, inner_cv, turn_off_warnings):
 @click.option('--turn-off-warnings', is_flag=True, help='Turns off warnings')
 def subtype(ssgsea, subtypes, outer_cv, inner_cv, turn_off_warnings):
     """Train subtype analysis."""
-    click.echo('Running subtype analysis for {} with: {} outer CVs and {} inner CVS'.format(ssgsea, outer_cv, inner_cv))
+    click.echo(f'Running subtype analysis for {ssgsea} with: {outer_cv} outer CVs and {inner_cv} inner CVS')
 
     if turn_off_warnings:
         click.echo("Warnings are now turned off")
@@ -454,7 +463,7 @@ def subtype(ssgsea, subtypes, outer_cv, inner_cv, turn_off_warnings):
         inner_cv=5,
         outer_cv=5,
         chain_pca=False,
-        explained_variance=0.95
+        explained_variance=0.95,
     )
 
     click.echo(all_metrics)
@@ -472,8 +481,14 @@ def subtype(ssgsea, subtypes, outer_cv, inner_cv, turn_off_warnings):
     help='Number of max iterations to converge'
 )
 @click.option('--turn-off-warnings', is_flag=True, help='Turns off warnings')
-def test_stability_prediction(ssgsea_scores_path, phenotypes_path, outer_cv, inner_cv, max_iterations,
-                              turn_off_warnings):
+def test_stability_prediction(
+        ssgsea_scores_path,
+        phenotypes_path,
+        outer_cv,
+        inner_cv,
+        max_iterations,
+        turn_off_warnings,
+):
     """Train elastic net."""
     make_classifier_results_directory()
     click.echo(
@@ -482,7 +497,6 @@ def test_stability_prediction(ssgsea_scores_path, phenotypes_path, outer_cv, inn
             ssgsea_scores_path,
             phenotypes_path,
             inner_cv,
-
         ))
 
     if turn_off_warnings:

@@ -541,7 +541,7 @@ def filter_gene_exp_data(expression_data, gmt_file):
     log.info(f'Gene universe has {len(gene_universe)}')
     log.info(f'{counter} were removed in expression data')
     log.info(
-        f'{(len(filtered_expression_data.index.values)-counter) /len(gene_universe)*100:.4f}% '
+        f'{(len(filtered_expression_data.index.values) - counter) / len(gene_universe) * 100:.4f}% '
         f'of the gene expression data is mapped to the pathway datasets')
 
     return filtered_expression_data.drop(genes_to_remove)

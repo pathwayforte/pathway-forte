@@ -39,7 +39,8 @@ def filter_fold_change_fd(df, p_value=False, fold_change_cutoff=2):
     return set(filtered_df[GENE_SYMBOL])
 
 
-def _prepare_hypergeometric_test(query_gene_set: Set[str], pathway_gene_set: Set[str], gene_universe: int) -> np.ndarray:
+def _prepare_hypergeometric_test(query_gene_set: Set[str], pathway_gene_set: Set[str],
+                                 gene_universe: int) -> np.ndarray:
     """Prepare the matrix for hypergeometric test calculations.
 
     :param query_gene_set: gene set to test against pathway
@@ -66,10 +67,10 @@ def _prepare_hypergeometric_test(query_gene_set: Set[str], pathway_gene_set: Set
 
 
 def perform_hypergeometric_test(
-        genes_to_test: Set[str], 
-        pathway_dict, 
-        gene_universe=41714, 
-        apply_threshold=False, 
+        genes_to_test: Set[str],
+        pathway_dict,
+        gene_universe=41714,
+        apply_threshold=False,
         threshold=0.01,
 ):
     """Perform hypergeometric tests.

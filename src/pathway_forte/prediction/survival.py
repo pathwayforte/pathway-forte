@@ -13,17 +13,13 @@ import os
 import numpy as np
 import pandas as pd
 from sklearn.decomposition import PCA
-from sklearn.model_selection import KFold, GridSearchCV
+from sklearn.model_selection import GridSearchCV, KFold
 from sksurv.linear_model import CoxnetSurvivalAnalysis
 from sksurv.metrics import concordance_index_censored
 from tqdm import tqdm
 
 from pathway_forte.constants import (
-    CANCER_DATA_SETS,
-    CLINICAL_DATA,
-    NORMAL_EXPRESSION_SAMPLES,
-    RESULTS,
-    PATHWAY_RESOURCES
+    CANCER_DATA_SETS, CLINICAL_DATA, NORMAL_EXPRESSION_SAMPLES, PATHWAY_RESOURCES, RESULTS,
 )
 from pathway_forte.utils import get_num_samples
 

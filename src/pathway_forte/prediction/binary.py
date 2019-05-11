@@ -2,19 +2,19 @@
 
 """Elastic Net regression with nested cross validation module."""
 
-import gseapy
 import logging
-import numpy as np
 import os
+from typing import Optional
+
+import gseapy
+import numpy as np
 import pandas as pd
-from pathway_forte.constants import CLASSIFIER_RESULTS
 from sklearn.linear_model import ElasticNetCV
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import StratifiedKFold
 from tqdm import tqdm
 
-log = logging.getLogger(__name__)
-np.random.seed(10)
+from pathway_forte.constants import CLASSIFIER_RESULTS
 
 __all__ = [
     'ssgsea_nes_to_df',
@@ -22,15 +22,15 @@ __all__ = [
     'train_elastic_net_model',
 ]
 
+log = logging.getLogger(__name__)
 
-def ssgsea_nes_to_df(ssgsea_scores_csv, classes_file, removed_random=None):
+
+def ssgsea_nes_to_df(ssgsea_scores_csv, classes_file, removed_random: Optional[int] = None):
     """Create dataFrame of Normalized Enrichment Scores (NES) from ssGSEA of TCGA expression data.
 
     :param ssgsea_scores_csv: Text file containing normalized ES for pathways from each sample
     :param test_size: Default test size is 0.25
-    :param Optional[int] removed_random: Remove percentage of df
-    :return:
-    :rtype:
+    :param removed_random: Remove percentage of df
     """
     # Read tsv file using the first row as the header.
     # Important! gseapy.samples.normalized.es.txt contains a descriptive header which here is omitted
@@ -55,7 +55,7 @@ def ssgsea_nes_to_df(ssgsea_scores_csv, classes_file, removed_random=None):
     enrichment_score_df = enrichment_score_df.drop("Term|NES")
 
     # Get class labels
-    phenoA, phenoB, class_vector = gseapy.parser.gsea_cls_parser(classes_file)
+    _, _, class_vector = gseapy.parser.gsea_cls_parser(classes_file)
 
     class_labels = []
 
@@ -80,75 +80,84 @@ def ssgsea_nes_to_df(ssgsea_scores_csv, classes_file, removed_random=None):
 
 def get_parameter_values():
     """Return a list of values that are used by the elastic net as hyperparameters."""
-    numbers = [
-        i
+    return [
+        i / 100
         for i in range(0, 101)
+        if not _skip_index(i)
     ]
 
-    parameters = []
 
-    for i in numbers:
-
-        if (i < 70 and (i % 2) == 0) or ((i % 3) == 0) or ((i % 5) == 0):
-            continue
-
-        parameters.append(i / 100)
-
-    return parameters
+def _skip_index(i):
+    return (i < 70 and (i % 2) == 0) or ((i % 3) == 0) or ((i % 5) == 0)
 
 
 def train_elastic_net_model(
-        x_features,
-        y_labels,
-        outer_cv_splits,
-        inner_cv_splits,
+        x,
+        y,
+        outer_cv_splits: int,
+        inner_cv_splits: int,
         hyperparameter_space,
-        model_name,
-        max_iter=1000,
-        export=True
+        model_name: str,
+        max_iter: Optional[int] = None,
+        export: bool = True,
 ):
     """Train elastic net model within a defined hyperparameter space via a nested cross validation given
     expression data.
 
-    :param numpy.array x_features: 2D matrix of pathway scores and samples
-    :param list y_labels: class labels of samples
-    :param int outer_cv_splits: number of folds for cross validation split in outer loop
-    :param int inner_cv_splits: number of folds for cross validation split in inner loop
+    :param numpy.array x: 2D matrix of pathway scores and samples
+    :param list y: class labels of samples
+    :param outer_cv_splits: number of folds for cross validation split in outer loop
+    :param inner_cv_splits: number of folds for cross validation split in inner loop
     :param list hyperparameter_space: list of hyperparameters for l1 and l2 priors
-    :param str model_name: name of the model
-    :param int max_iter: default to 1000 to ensure convergence
+    :param model_name: name of the model
+    :param max_iter: default to 1000 to ensure convergence
+    :param export: Export the models using :mod:`joblib`
     :return:
     """
+    auc_scores = []
+    it = _help_train_elastic_net_model(
+        x=x,
+        y=y,
+        outer_cv_splits=outer_cv_splits,
+        inner_cv_splits=inner_cv_splits,
+        hyperparameter_space=hyperparameter_space,
+        max_iter=max_iter,
+    )
+    for i, (glm_elastic, y_test, y_pred) in enumerate(it):
+        log.info(f'Iteration {i}: {glm_elastic.get_params()}')
+        auc_scores.append(roc_auc_score(y_test, y_pred))
+        # Pickle to model
+        if export:
+            import joblib
+            joblib.dump(glm_elastic, os.path.join(CLASSIFIER_RESULTS, f'{model_name}_{i}.joblib'))
+
+    return auc_scores
+
+
+def _help_train_elastic_net_model(
+        x,
+        y,
+        outer_cv_splits: int,
+        inner_cv_splits: int,
+        hyperparameter_space,
+        max_iter: Optional[int] = None,
+):
+    max_iter = max_iter or 1000
 
     # Use variation of KFold cross validation that returns stratified folds for outer loop in the CV.
     # The folds are made by preserving the percentage of samples for each class.
     skf = StratifiedKFold(n_splits=outer_cv_splits, shuffle=True)
 
-    auc_scores = []
+    iterator = tqdm(skf.split(x, y))
 
-    iterator = tqdm(skf.split(x_features, y_labels))
-
-    for i, (train_index, test_index) in enumerate(iterator):
-        X_train, X_test = x_features.iloc[train_index], x_features.iloc[test_index]
-        y_train, y_test = [y_labels[i] for i in train_index], [y_labels[i] for i in test_index]
+    for train_index, test_index in iterator:
+        x_train, x_test = x.iloc[train_index], x.iloc[test_index]
+        y_train = [y[train_index] for train_index in train_index]
+        y_test = [y[train_index] for train_index in test_index]
 
         # Instantiate the model fitting along a regularization path (CV).
         # Inner loop
         glm_elastic = ElasticNetCV(hyperparameter_space, cv=inner_cv_splits, max_iter=max_iter)
-        glm_elastic.fit(X_train, y_train)
-
-        log.info('Iteration {}:{}'.format(i, glm_elastic.get_params()))
-
-        predicted_values = glm_elastic.predict(X_test)
-
-        score = roc_auc_score(y_test, predicted_values)
-        auc_scores.append(score)
-
-        log.info('Iteration {} AUC score:{}'.format(i, score))
-
-        # Pickle to model
-        if export:
-            from joblib import dump
-            dump(glm_elastic, os.path.join(CLASSIFIER_RESULTS, '{}_{}.joblib'.format(model_name, i)))
-
-    return auc_scores
+        glm_elastic.fit(x_train, y_train)
+        y_pred = glm_elastic.predict(x_test)
+        yield glm_elastic, y_test, y_pred

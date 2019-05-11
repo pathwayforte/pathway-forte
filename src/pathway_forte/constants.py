@@ -18,15 +18,16 @@ DATA = os.path.join(os.path.abspath(os.path.join(SOURCE, os.pardir)), 'data')
 
 CANCER_DATA_SETS = {'brca', 'lihc', 'kirc', 'prad', 'ov'}
 
-EXPRESSION_MATRIX = os.path.join(DATA, 'tcga_datasets', '{}', 'expression_matrix_full.txt')
-PHENOTYPE_CLASSES = os.path.join(DATA, 'tcga_datasets', '{}', 'phenotype_classes.cls')
-CLASSES = os.path.join(DATA, 'tcga_datasets', '{}', 'class.cls')
+TCGA_DATASETS = os.path.join(DATA, 'tcga_datasets')
+EXPRESSION_MATRIX = os.path.join(TCGA_DATASETS, '{}', 'expression_matrix_full.txt')
+PHENOTYPE_CLASSES = os.path.join(TCGA_DATASETS, '{}', 'phenotype_classes.cls')
+CLASSES = os.path.join(TCGA_DATASETS, '{}', 'class.cls')
 
-CLINICAL_DATA = os.path.join(DATA, 'tcga_datasets', '{}', '{}_tcga_clinical_data.tsv')
-TUMOR_EXPRESSION_MATRIX = os.path.join(DATA, 'tcga_datasets', '{}', 'tumor_expression_matrix.txt')
+CLINICAL_DATA = os.path.join(TCGA_DATASETS, '{}', '{}_tcga_clinical_data.tsv')
+TUMOR_EXPRESSION_MATRIX = os.path.join(TCGA_DATASETS, '{}', 'tumor_expression_matrix.txt')
 
-NORMAL_EXPRESSION_SAMPLES = os.path.join(DATA, 'tcga_datasets', '{}', 'normal_expression_dimension.txt')
-TUMOR_EXPRESSION_SAMPLES = os.path.join(DATA, 'tcga_datasets', '{}', 'tumor_expression_dimension.txt')
+NORMAL_EXPRESSION_SAMPLES = os.path.join(TCGA_DATASETS, '{}', 'normal_expression_dimension.txt')
+TUMOR_EXPRESSION_SAMPLES = os.path.join(TCGA_DATASETS, '{}', 'tumor_expression_dimension.txt')
 
 RESULTS = os.path.join(DATA, 'results')
 CLASSIFIER_RESULTS = os.path.join(RESULTS, 'classifier')
@@ -185,7 +186,14 @@ MERGED_GENESET = 'merge'
 MSIG = 'msig'
 CONCATENATED_MERGE = 'concatenated_merge'
 
-PATHWAY_RESOURCES = [KEGG, REACTOME, WIKIPATHWAYS, MERGED_GENESET, MSIG, CONCATENATED_MERGE]
+PATHWAY_RESOURCES = [
+    KEGG,
+    REACTOME,
+    WIKIPATHWAYS,
+    MERGED_GENESET,
+    MSIG,
+    CONCATENATED_MERGE,
+]
 
 GENESET_COLUMN_NAMES = {
     KEGG: "KEGG Geneset",

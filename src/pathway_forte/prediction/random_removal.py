@@ -4,7 +4,7 @@
 
 from collections import defaultdict
 
-from pathway_forte.prediction.binary import train_elastic_net_model, ssgsea_nes_to_df
+from pathway_forte.prediction.binary import ssgsea_nes_to_df, train_elastic_net_model
 
 
 def run_stability_iterations(
