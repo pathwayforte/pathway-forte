@@ -4,7 +4,6 @@ PathwayForte
 
 Main Commands
 -------------
-
 The table below lists the main commands of PathwayForte.
 
 +------------+--------------------------------+
@@ -26,8 +25,8 @@ The table below lists the main commands of PathwayForte.
    :caption: Contents:
 
    cli
+   pipeline
    constants
-   utils
 
 Index
 =====

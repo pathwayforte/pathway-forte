@@ -1,9 +1,8 @@
 Gene Sets Files
 ===============
+All the resources in this folder with the "final" tag were generated on March 14th, 2019.
 
-All the resources in this folder with the "final" tag were generated on the 14th of March.
-
-MSigDB files were downloaded on the 13th of March and correspond to the 6.2 version of this resource.
+MSigDB files were downloaded on March 13th, 2019 and correspond to the 6.2 version of this resource.
 
 KEGG License
 ------------
