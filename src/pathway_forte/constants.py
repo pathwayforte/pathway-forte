@@ -10,6 +10,7 @@ log = logging.getLogger(__name__)
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 SOURCE = os.path.join(os.path.abspath(os.path.join(dir_path, os.pardir)))
+# Data folder where gene sets files are
 DATA = os.path.join(os.path.abspath(os.path.join(SOURCE, os.pardir)), 'data')
 
 """Cancer Data Sets"""
@@ -23,10 +24,13 @@ CANCER_DATA_SETS = {
 }
 
 TCGA_DATASETS = os.path.join(DATA, 'tcga_datasets')
+# Raw expression matrix from TCGA
 EXPRESSION_MATRIX = os.path.join(TCGA_DATASETS, '{}', 'expression_matrix_full.txt')
+# File with phenotype classes (e.g., tumor vs normal)
 PHENOTYPE_CLASSES = os.path.join(TCGA_DATASETS, '{}', 'phenotype_classes.cls')
 CLASSES = os.path.join(TCGA_DATASETS, '{}', 'class.cls')
 
+# Clinical data from TCGA (necessary for survival analysis)
 CLINICAL_DATA = os.path.join(TCGA_DATASETS, '{}', '{}_tcga_clinical_data.tsv')
 TUMOR_EXPRESSION_MATRIX = os.path.join(TCGA_DATASETS, '{}', 'tumor_expression_matrix.txt')
 
@@ -126,6 +130,7 @@ def check_gmt_files():
 
     kegg_gmt_file, reactome_gmt_file, wikipathways_gmt_file, merge_gmt_file = None, None, None, None
 
+    # Get gmt files using the prefix for each database
     for file in gmt_file_names:
 
         if file.startswith('kegg_geneset'):
@@ -146,6 +151,7 @@ def check_gmt_files():
         else:
             log.warning('Unknown file {} in gmt folder'.format(os.path.join(GMT_FOLDER, file)))
 
+    # If any of the GMT files is missing print warning
     if not all([kegg_gmt_file, reactome_gmt_file, wikipathways_gmt_file, merge_gmt_file]):
         log.warning('GMT files missing, please create them by running the "export_gene_sets" command.')
 
@@ -154,6 +160,7 @@ def check_gmt_files():
 
 KEGG_GENE_SETS, REACTOME_GENE_SETS, WIKIPATHWAYS_GENE_SETS, MERGED_GENE_SETS = check_gmt_files()
 
+# Export the gene set with a time stamp
 TODAY = time.strftime("%d_%m_%Y")
 NEW_KEGG_GENE_SETS = os.path.join(GMT_FOLDER, f'kegg_geneset{TODAY}.gmt')
 NEW_REACTOME_GENE_SETS = os.path.join(GMT_FOLDER, f'reactome_geneset{TODAY}.gmt')
@@ -175,6 +182,7 @@ KEGG_WP_URL = "https://raw.githubusercontent.com/ComPath/resources/master/mappin
 WP_REACTOME_URL = "https://raw.githubusercontent.com/ComPath/resources/master/mappings/wikipathways_reactome.csv"
 SPECIAL_MAPPINGS_URL = "https://raw.githubusercontent.com/ComPath/resources/master/mappings/special_mappings.csv"
 
+# Columns of the ComPath mapping data frame
 RESOURCE = 'Resource'
 PATHWAY_ID = 'Pathway ID'
 IS_PART_OF = "isPartOf"
@@ -184,6 +192,7 @@ TARGET_RESOURCE = 'Target Resource'
 TARGET_ID = "Target ID"
 SOURCE_ID = "Source ID"
 
+# Pathway databases' codes
 KEGG = "kegg"
 REACTOME = 'reactome'
 WIKIPATHWAYS = 'wikipathways'
@@ -191,6 +200,7 @@ MERGED_GENESET = 'merge'
 MSIG = 'msig'
 CONCATENATED_MERGE = 'concatenated_merge'
 
+# List with all pathway resources
 PATHWAY_RESOURCES = [
     KEGG,
     REACTOME,
@@ -208,6 +218,7 @@ GENESET_COLUMN_NAMES = {
 
 """Columns to read to perform ORA analysis."""
 
+# Expected columns to do ORA analysis
 GENE_SYMBOL = 'gene_symbol'
 FOLD_CHANGE = 'log2FoldChange'
 P_VALUE = 'p_value'

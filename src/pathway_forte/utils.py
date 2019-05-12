@@ -25,6 +25,7 @@ def plot_aucs(
         dataset_name
     ), fontsize=14)
 
+    # Save plot in a given folder
     plt.ylabel('AUC', fontsize=13)
     plt.savefig(os.path.join(export_directory, f"{database_name}_{dataset_name}_aucs.png"))
 
