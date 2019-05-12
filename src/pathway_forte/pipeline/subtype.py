@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-""""""
+"""CLI wrapper to perform subtype classification."""
 
 import logging
 from typing import Optional
@@ -28,12 +28,18 @@ def do_subtype_prediction(
         chain_pca: bool,
         explained_variance: Optional[float] = None,
 ):
+    # Adapt ssGSEA dataframe for scikit learn purposes
     enrichment_score_df = stabilize_ssgsea_scores_df(ssgsea_path)
+    # Prepare sample ids file
     patient_ids = get_sample_ids_with_cancer_subtypes(subtypes_path)
+    # Remove indexes from patients that are not in any subtype
     filter_by_index(enrichment_score_df, patient_ids)
+    # Read subtype dataframe
     subtypes_df = pd.read_csv(subtypes_path, sep='\t')
+    # Prepare class label vector
     class_labels = get_class_labels(enrichment_score_df, subtypes_df)
 
+    # Call the method to train the classifier
     return train_multiclass_classifier(
         enrichment_score_df,
         class_labels,

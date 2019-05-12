@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-""""""
+"""CLI wrapper to perform binary classification."""
 
 import logging
 import os

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-""""""
+"""CLI wrapper to export updated gene sets using ComPath."""
 
 import logging
 

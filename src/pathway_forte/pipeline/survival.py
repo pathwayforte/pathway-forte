@@ -23,11 +23,13 @@ def do_survival_prediction(
         outer_cv_splits,
         inner_cv_splits,
 ):
+    # List of parameters to use in grid search
     param_grid = {
         'l1_ratio': get_l1_ratios(),
     }
     logger.info(f'Parameter grid: {param_grid}')
 
+    # Run survival analysis in all datasets available
     results = run_survival_all_datasets(
         os.path.join(SSGSEA, data),
         outer_cv_splits=outer_cv_splits,
@@ -38,6 +40,7 @@ def do_survival_prediction(
 
     results_path = os.path.join(CLASSIFIER_RESULTS, f'survival_results_{data}.pickle')
 
+    # Export prediction metrics as a pickle
     with open(results_path, 'wb') as file:
         pickle.dump(results, file)
     logger.info(f'Done with survival analysis. Results are exported in {results_path}')

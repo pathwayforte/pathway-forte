@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-""""""
+"""CLI wrapper to perform GSEA with the four major pathway databases."""
 
 import logging
 import os

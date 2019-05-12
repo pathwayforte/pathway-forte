@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-""""""
+"""CLI wrapper to perform GSEA with MSigDB gene sets."""
 
 import logging
 import os

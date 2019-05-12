@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-""""""
+"""CLI wrapper to perform ORA using one-tailed hyper-geometric tests."""
 
 import logging
 import os

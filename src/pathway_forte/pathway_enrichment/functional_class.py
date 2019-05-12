@@ -490,6 +490,7 @@ def check_pathway_ids(source_df, source, merged_pathways_list, mappings_dict):
     """Check pathway IDs for pathways with mappings"""
     pathways_with_matches = []
 
+    # Get pathway id column
     pathway_ids = source_df["pathway_id"].tolist()
 
     for pathway_id in pathway_ids:
@@ -542,6 +543,7 @@ def filter_gene_exp_data(expression_data: pd.DataFrame, gmt_file: str):
     # Gene universe from gene set
     gene_sets = gseapy.parser.gsea_gmt_parser(gmt_file, max_size=40000)
 
+    # All the genes in gene set files
     gene_universe = set(itt.chain(*gene_sets.values()))
 
     genes_to_remove = [
@@ -549,6 +551,7 @@ def filter_gene_exp_data(expression_data: pd.DataFrame, gmt_file: str):
         for gene in filtered_expression_data.index.values
         if gene not in gene_universe
     ]
+    # Genes to be removed because they are not present in the gene sets
     counter = len(genes_to_remove)
 
     log.info(f'Expression data has {len(filtered_expression_data.index.values)}')
@@ -558,4 +561,5 @@ def filter_gene_exp_data(expression_data: pd.DataFrame, gmt_file: str):
         f'{(len(filtered_expression_data.index.values) - counter) / len(gene_universe) * 100:.4f}% '
         f'of the gene expression data is mapped to the pathway datasets')
 
+    # Remove non HGNC genes and return dataframe
     return filtered_expression_data.drop(genes_to_remove)

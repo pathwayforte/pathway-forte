@@ -123,14 +123,18 @@ def train_elastic_net_model(
         l1_ratio=l1_ratio,
         max_iter=max_iter,
     )
+
+    # Iterator to calculate metrics for each CV step
     for i, (glm_elastic, y_test, y_pred) in enumerate(it):
         log.info(f'Iteration {i}: {glm_elastic.get_params()}')
         auc_scores.append(roc_auc_score(y_test, y_pred))
-        # Pickle to model
+
+        # Export a pickle the model of the given CV
         if export:
             import joblib
             joblib.dump(glm_elastic, os.path.join(CLASSIFIER_RESULTS, f'{model_name}_{i}.joblib'))
 
+    # Return a list with all AUC scores for each CV step
     return auc_scores
 
 
@@ -148,8 +152,13 @@ def _help_train_elastic_net_model(
     # The folds are made by preserving the percentage of samples for each class.
     skf = StratifiedKFold(n_splits=outer_cv_splits, shuffle=True)
 
+    # tqdm wrapper to print the current CV state
     iterator = tqdm(skf.split(x, y), desc='Outer CV for binary prediction')
+
+    # Iterator over the CVs
     for train_indexes, test_indexes in iterator:
+
+        # Splice the entire data set so only the training and test sets for this CV iter are used
         x_train, x_test = x.iloc[train_indexes], x.iloc[test_indexes]
         y_train = [y[train_index] for train_index in train_indexes]
         y_test = [y[test_index] for test_index in test_indexes]
@@ -157,6 +166,12 @@ def _help_train_elastic_net_model(
         # Instantiate the model fitting along a regularization path (CV).
         # Inner loop
         glm_elastic = ElasticNetCV(l1_ratio=l1_ratio, cv=inner_cv_splits, max_iter=max_iter)
+
+        # Fit model with train data
         glm_elastic.fit(x_train, y_train)
+
+        # Predict trained model with test data
         y_pred = glm_elastic.predict(x_test)
+
+        # Return model and y test y predict to calculate prediction metrics
         yield glm_elastic, y_test, y_pred

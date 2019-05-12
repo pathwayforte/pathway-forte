@@ -149,7 +149,9 @@ def train_survival_model(
 
     iterator = tqdm(kf.split(x, y))
 
+    # Iterator for each CV step in the outer loop
     for i, (train_indexes, test_indexes) in enumerate(iterator):
+        # Slice main data frame to get the training and test data for this CV step
         x_train = x.iloc[train_indexes]
         x_test = x.iloc[test_indexes]
         y_train = np.asarray([y[train_index] for train_index in train_indexes])
@@ -158,10 +160,10 @@ def train_survival_model(
         # Instantiate Cox’s proportional hazard’s regression model with elastic net penalty
         coxnet = CoxnetSurvivalAnalysis()
 
-        # Tune hyper-parameters (e.g., L1-ratio) of the estimator using grid search
+        # Tune hyper-parameters (e.g., L1-ratio) of the estimator using grid search (Inner loop in the nested-CV)
         gcv = GridSearchCV(estimator=coxnet, param_grid=param_grid, cv=inner_cv, return_train_score=True)
 
-        # Search grid
+        # Run grid search on training data
         gcv.fit(x_train, y_train)
 
         # Extract best model from the grid
@@ -171,12 +173,14 @@ def train_survival_model(
         prediction = coxnet.predict(x_test)
 
         # Evaluate the performance of the model during grid search using Harrell's concordance index
+        # Note that the main data frame is sliced to use only the test data for this CV step
         cindex, concordant, discordant, tied_risk, tied_time = concordance_index_censored(
             [y[test_index]['status'] for test_index in test_indexes],  # The status array for test set
             [y[test_index]['days_to_death'] for test_index in test_indexes],  # The days to death for test set
             prediction,  # Prediction scores
         )
 
+        # print C-Index and best parameter found in the grid search
         print('best c-index: {}'.format(cindex))
         print('best parameter: {}'.format(gcv.best_params_))
 
@@ -207,6 +211,7 @@ def run_survival_all_datasets(
         inner_cv_splits: int,
         param_grid,
 ):
+    """Run survival analysis using one ssGSEA file (pathway database) in all cancer datasets."""
     it = _help_run_survival_all_datasets(
         directory=path,
         outer_cv_splits=outer_cv_splits,

@@ -20,7 +20,6 @@ def read_fold_change_df(path) -> pd.DataFrame:
     df = pd.read_csv(path)
 
     # Check all columns are present
-
     missing_columns = [
         column
         for column in FC_COLUMNS
@@ -60,6 +59,7 @@ def _prepare_hypergeometric_test(query_gene_set: Set[str], pathway_gene_set: Set
     if not isinstance(pathway_gene_set, set):
         pathway_gene_set = set(pathway_gene_set)
 
+    # Return matrix to test hyper-geometric test
     return np.array([
         [
             len(query_gene_set.intersection(pathway_gene_set)),

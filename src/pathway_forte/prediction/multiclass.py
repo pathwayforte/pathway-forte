@@ -43,7 +43,7 @@ def stabilize_ssgsea_scores_df(path: str) -> pd.DataFrame:
 
 
 def filter_by_index(df: pd.DataFrame, keep_indexes: Collection) -> None:
-    # Filter out samples with no matches in both datasets
+    """Filter out samples with no matches in both datasets."""
     for index, ssgsea_row in df.iterrows():
         if index not in keep_indexes:
             df.drop(index, inplace=True)
