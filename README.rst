@@ -3,16 +3,23 @@ PathwayForte |build| |docs| |coverage| |zenodo|
 A Python package for benchmarking pathway databases in functional enrichment and prediction methods
 tasks.
 
-
 Installation |pypi_version| |python_versions| |pypi_license|
 ------------------------------------------------------------
-1. ``pathway_forte`` can be installed with the following commands:
+``pathway_forte`` can be installed from `PyPI <https://pypi.org/project/pathway-forte>`_
+with the following command in your terminal:
 
 .. code-block:: sh
 
     $ python3 -m pip install pathway_forte
 
-2. or in editable mode with:
+The latest code can be installed from `GitHub <https://github.com/pathwayforte/pathway-forte>`_ 
+with:
+
+.. code-block:: sh
+
+    $ python3 -m pip install git+https://github.com/pathwayforte/pathway-forte.git
+
+For developers, the code can be installed with:
 
 .. code-block:: sh
 
@@ -47,7 +54,6 @@ More details of some commands:
 
 3. **prediction**. Prediction methods include training elastic nets for binary classification, training SVMs for multi-classification tasks, or survival analysis.
 
-
 .. |build| image:: https://travis-ci.com/pathwayforte/pathway-forte.svg?branch=master
     :target: https://travis-ci.com/pathwayforte/pathway-forte
     :alt: Build Status
@@ -61,16 +67,16 @@ More details of some commands:
     :alt: Coverage Status
 
 .. |python_versions| image:: https://img.shields.io/pypi/pyversions/pathway_forte.svg
+    :target: https://pypi.org/project/pathway-forte
     :alt: Stable Supported Python Versions
 
 .. |pypi_version| image:: https://img.shields.io/pypi/v/pathway_forte.svg
+    :target: https://pypi.org/project/pathway-forte
     :alt: Current version on PyPI
 
 .. |pypi_license| image:: https://img.shields.io/pypi/l/pathway_forte.svg
+    :target: https://github.com/pathwayforte/pathway-forte/blob/master/LICENSE
     :alt: Apache-2.0
 
 .. |zenodo| image:: https://zenodo.org/badge/178654585.svg
     :target: https://zenodo.org/badge/latestdoi/178654585
-
-
-
