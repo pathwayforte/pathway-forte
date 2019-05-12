@@ -51,8 +51,7 @@ Functional Enrichment Methods
 
 - **ora**. Lists Over-Representation Analyses (e.g., one-tailed hyper-geometric test).
 
-- **fcs**. Lists Functional Class Score Analyses such as GSEA and ssGSEA using
-   `GSEAPy <https://github.com/ostrokach/gseapy>`_.
+- **fcs**. Lists Functional Class Score Analyses such as GSEA and ssGSEA using `GSEAPy <https://github.com/ostrokach/gseapy>`_.
 
    
 Prediction Methods
@@ -76,8 +75,8 @@ References
 ----------
 
 .. [1] Lim, S., *et al.* (2018). `Comprehensive and critical evaluation of individualized pathway activity measurement tools on pan-cancer data <https://doi.org/10.1093/bib/bby097>`_. *Briefings in bioinformatics*, bby125.
-    
-.. [2] Domingo-Fernández, D., *et al.* (2019). `ComPath: An ecosystem for exploring, analyzing, and curating mappings across pathway databases <https://doi.org/10.1038/s41540-018-0078-8>`_. *npj Syst Biol Appl.*, 5(1):3.
+
+.. [2] Domingo-Fernández, D., *et al.* (2018). `ComPath: An ecosystem for exploring, analyzing, and curating mappings across pathway databases <https://doi.org/10.1038/s41540-018-0078-8>`_. *npj Syst Biol Appl.*, 4(1):43.
 
 
 .. |build| image:: https://travis-ci.com/pathwayforte/pathway-forte.svg?branch=master
