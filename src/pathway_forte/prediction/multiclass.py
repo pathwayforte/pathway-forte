@@ -2,7 +2,7 @@
 
 """Logistic regression with nested cross validation module."""
 
-from typing import Optional
+from typing import Collection, Optional
 
 import numpy as np
 import pandas as pd
@@ -14,19 +14,21 @@ from tqdm import tqdm
 
 from pathway_forte.prediction.utils import pca_chaining
 
+SVC_PARAM_GRID = {
+    'estimator__kernel': ('linear', 'rbf'),
+    'estimator__C': [1, 10, 100],
+}
 
-def get_sample_ids_with_cancer_subtypes(file_path):
-    subtype_column = 'subtype_BRCA_Subtype_PAM50'
-    df = pd.read_csv(file_path, sep='\t')
-    df.head()
+
+def get_sample_ids_with_cancer_subtypes(path: str, subtype_column: str = 'subtype_BRCA_Subtype_PAM50'):
+    df = pd.read_csv(path, sep='\t')
     df.drop("barcode", axis=1, inplace=True)  # TODO: remove barcode column upon creation
     df.drop(df[df[subtype_column] == 'Normal'].index, inplace=True)
-
     return df.index
 
 
-def stabilize_ssgsea_scores_df(file_path):
-    df = pd.read_csv(file_path, sep='\t', header=0)
+def stabilize_ssgsea_scores_df(path: str) -> pd.DataFrame:
+    df = pd.read_csv(path, sep='\t', header=0)
 
     # Transpose dataFrame to arrange columns as pathways and rows as genes
     df = df.transpose()
@@ -40,13 +42,11 @@ def stabilize_ssgsea_scores_df(file_path):
     return df
 
 
-def match_samples(df1, list1):
+def filter_by_index(df: pd.DataFrame, keep_indexes: Collection) -> None:
     # Filter out samples with no matches in both datasets
-    for index, ssgsea_row in df1.iterrows():
-        if index not in list1:
-            df1.drop(index, inplace=True)
-
-    return df1
+    for index, ssgsea_row in df.iterrows():
+        if index not in keep_indexes:
+            df.drop(index, inplace=True)
 
 
 def get_class_labels(features_df, labels_df):
@@ -76,13 +76,7 @@ def convert_df_to_features_array(df):
     return np.asarray(pathways_array)
 
 
-PARAM_GRID = {
-    'estimator__kernel': ('linear', 'rbf'),
-    'estimator__C': [1, 10, 100],
-}
-
-
-def train_multiclass_svm(
+def train_multiclass_classifier(
         x,
         y,
         *,
@@ -90,6 +84,7 @@ def train_multiclass_svm(
         outer_cv_splits: int,
         chain_pca: bool = False,
         explained_variance: Optional[float] = None,
+        get_estimator=None,
 ):
     """Train SVM with multiclass labels with a defined hyper-parameter space via a nested cross validation for TCGA
     expression data.
@@ -100,37 +95,47 @@ def train_multiclass_svm(
     :param outer_cv_splits: number of folds for cross validation split in outer loop
     :param chain_pca: chain PCA to classifier
     :param explained_variance: amount of variance retained. Defaults to 0.95.
+    :param get_estimator: A function returning a pair of the classifier and the param grid dictionary to use
+     during grid search CV. Defaults to an SVM classifier with :data:`SVC_PARAM_GRID`.
     :return:
     """
-    all_accuracy_metrics = {}
-    all_f1_metrics = {}
-
-    target_names = ['Class 0', 'Class 1', 'Class 2', 'Class 3']
-
-    it = _help_train_multiclass_svm(
-        x, y,
+    it = _help_train_multiclass_classifier(
+        x,
+        y,
         inner_cv_splits=inner_cv_splits,
         outer_cv_splits=outer_cv_splits,
         chain_pca=chain_pca,
         explained_variance=explained_variance,
+        get_estimator=get_estimator,
     )
-    for i, (classifier, y_test, y_pred) in enumerate(it, start=1):
+    for classifier, y_test, y_pred in it:
         # Get the subset accuracy st labels predicted for a sample exactly match true labels (harsh)
-        accuracy = metrics.accuracy_score(y_test, y_pred)  # set sample_weight to get weighted accuracy
-        f1_score = metrics.f1_score(y_test, y_pred, average="weighted")
-        all_accuracy_metrics[i] = accuracy
-        all_f1_metrics[i] = f1_score
+        yield {
+            'evaluation': {
+                'best_parameters': classifier.best_params_,
+                'metrics': {
+                    'accuracy': metrics.accuracy_score(y_test, y_pred),  # set sample_weight to get weighted accuracy,
+                    'f1': metrics.f1_score(y_test, y_pred, average="weighted"),
+                    'mcc': metrics.matthews_corrcoef(y_test, y_pred),
+                },
+            },
+            'data': {
+                'y_test': list(y_test),
+                'y_pred': list(y_pred),
+            },
+        }
 
-        print(f'For iteration {i}:')
-        print(f'best parameter is {classifier.best_params_}')
-        print(f'test accuracy is {accuracy}')
-        print(f'f1 score is {f1_score}\n')
-        print(metrics.classification_report(y_test, y_pred, target_names=target_names))
 
-    return all_accuracy_metrics, all_f1_metrics
+def get_ovo_svc_classifier():
+    """Get a classifier that fits one classifier per class.
+
+    For each classifier, class is fit against all other classes.
+    """
+    classifier = OneVsOneClassifier(SVC(gamma='scale'))
+    return classifier, SVC_PARAM_GRID
 
 
-def _help_train_multiclass_svm(
+def _help_train_multiclass_classifier(
         x,
         y,
         *,
@@ -138,9 +143,9 @@ def _help_train_multiclass_svm(
         outer_cv_splits: int,
         chain_pca: bool = False,
         explained_variance: Optional[float] = None,
+        get_estimator=None,
 ):
-    """Train SVM with multiclass labels with a defined hyper-parameter space via a nested cross validation for TCGA
-    expression data.
+    """Train a multi-class classifier over a defined parameter grid using nested cross-validation.
 
     :param Numpy.ndarray x: 2D array of pathway scores and samples
     :param Numpy.ndarray y: 1D array of sample subtype labels
@@ -148,28 +153,29 @@ def _help_train_multiclass_svm(
     :param outer_cv_splits: number of folds for cross validation split in outer loop
     :param chain_pca: chain PCA to classifier
     :param explained_variance: amount of variance retained
+    :param get_estimator: A function returning a pair of the classifier and the param grid dictionary to use
+     during grid search CV. Defaults to an SVM classifier with :data:`SVC_PARAM_GRID`.
     :return:
     """
     explained_variance = explained_variance or 0.95
+    get_estimator = get_estimator or get_ovo_svc_classifier
 
-    kf = KFold(n_splits=outer_cv_splits, shuffle=True)
+    k_fold = KFold(n_splits=outer_cv_splits, shuffle=True)
 
-    iterator = tqdm(kf.split(x, y))
+    iterator = tqdm(k_fold.split(x, y))
 
-    for train_index, test_index in iterator:
-        x_train = x[train_index]
-        x_test = x[test_index]
-        y_train = np.asarray([y[i] for i in train_index])
-        y_test = np.asarray([y[i] for i in test_index])
+    for train_indexes, test_indexes in iterator:
+        x_train = x[train_indexes]
+        x_test = x[test_indexes]
+        y_train = np.asarray([y[train_index] for train_index in train_indexes])
+        y_test = np.asarray([y[test_index] for test_index in test_indexes])
 
         if chain_pca:  # Apply PCA
             x_train, x_test = pca_chaining(x_train, x_test, explained_variance)
 
-        # Fit one classifier per class
-        # For each classifier, class is fit against all other classes
-        svm = OneVsOneClassifier(SVC(gamma='scale'))
+        estimator, param_grid = get_estimator()
 
-        classifier = GridSearchCV(estimator=svm, param_grid=PARAM_GRID, cv=inner_cv_splits)
+        classifier = GridSearchCV(estimator=estimator, param_grid=param_grid, cv=inner_cv_splits)
         classifier.fit(x_train, y_train)
 
         y_pred = classifier.predict(x_test)

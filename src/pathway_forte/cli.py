@@ -6,7 +6,8 @@ import logging
 import warnings
 
 import click
-
+from sklearn import metrics
+import json
 from pathway_forte.constants import CANCER_DATA_SETS
 from pathway_forte.pipeline import (
     do_binary_prediction, do_export, do_fisher_ora, do_gsea, do_gsea_msig, do_ssgsea,
@@ -150,7 +151,7 @@ def survival(data, outer_cv, inner_cv, turn_off_warnings):
         click.echo("Warnings are now turned off")
         warnings.simplefilter('ignore')
 
-    click.echo(f'Running survival analysis for {data} with: {outer_cv} outer CVs and {inner_cv} inner CVS')
+    click.echo(f'Running survival analysis for {data} with: {outer_cv} outer CVs and {inner_cv} inner CVs')
     do_survival_prediction(data=data, outer_cv_splits=outer_cv, inner_cv_splits=inner_cv)
 
 
@@ -176,8 +177,8 @@ def subtype(
         click.echo("Warnings are now turned off")
         warnings.simplefilter('ignore')
 
-    click.echo(f'Running subtype analysis for {ssgsea} with: {outer_cv} outer CVs and {inner_cv} inner CVS')
-    do_subtype_prediction(
+    click.echo(f'Running subtype analysis for {ssgsea} with: {outer_cv} outer CVs and {inner_cv} inner CVs')
+    results = do_subtype_prediction(
         ssgsea,
         subtypes,
         outer_cv_splits=outer_cv,
@@ -185,6 +186,13 @@ def subtype(
         chain_pca=chain_pca,
         explained_variance=explained_variance,
     )
+    for i, result in enumerate(results, start=1):
+        click.echo(json.dumps(result['evaluation'], indent=2))
+        click.echo(metrics.classification_report(
+            result['data']['y_test'],
+            result['data']['y_pred'],
+            target_names=['Class 0', 'Class 1', 'Class 2', 'Class 3'],
+        ))
 
 
 @prediction.command()

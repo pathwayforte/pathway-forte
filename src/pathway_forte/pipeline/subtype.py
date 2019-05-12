@@ -3,12 +3,13 @@
 """"""
 
 import logging
+from typing import Optional
 
 import pandas as pd
 
 from pathway_forte.prediction.multiclass import (
-    get_class_labels, get_sample_ids_with_cancer_subtypes, match_samples, stabilize_ssgsea_scores_df,
-    train_multiclass_svm,
+    filter_by_index, get_class_labels, get_sample_ids_with_cancer_subtypes, stabilize_ssgsea_scores_df,
+    train_multiclass_classifier,
 )
 
 __all__ = [
@@ -19,27 +20,25 @@ logger = logging.getLogger(__name__)
 
 
 def do_subtype_prediction(
-        ssgsea,
-        subtypes,
+        ssgsea_path: str,
+        subtypes_path: str,
         *,
-        outer_cv_splits,
-        inner_cv_splits,
-        chain_pca,
-        explained_variance,
+        outer_cv_splits: int,
+        inner_cv_splits: int,
+        chain_pca: bool,
+        explained_variance: Optional[float] = None,
 ):
-    patient_ids = get_sample_ids_with_cancer_subtypes(subtypes)
-    brca_subtypes_df = pd.read_csv(subtypes, sep='\t')
+    enrichment_score_df = stabilize_ssgsea_scores_df(ssgsea_path)
+    patient_ids = get_sample_ids_with_cancer_subtypes(subtypes_path)
+    filter_by_index(enrichment_score_df, patient_ids)
+    subtypes_df = pd.read_csv(subtypes_path, sep='\t')
+    class_labels = get_class_labels(enrichment_score_df, subtypes_df)
 
-    enrichment_score_df = stabilize_ssgsea_scores_df(ssgsea)
-    pathway_features = match_samples(enrichment_score_df, patient_ids)
-    class_labels = get_class_labels(pathway_features, brca_subtypes_df)
-
-    all_metrics = train_multiclass_svm(
-        pathway_features,
+    return train_multiclass_classifier(
+        enrichment_score_df,
         class_labels,
         outer_cv_splits=outer_cv_splits,
         inner_cv_splits=inner_cv_splits,
         chain_pca=chain_pca,
         explained_variance=explained_variance,
     )
-    logger.info(all_metrics)

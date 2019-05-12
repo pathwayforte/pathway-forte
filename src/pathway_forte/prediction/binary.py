@@ -148,12 +148,11 @@ def _help_train_elastic_net_model(
     # The folds are made by preserving the percentage of samples for each class.
     skf = StratifiedKFold(n_splits=outer_cv_splits, shuffle=True)
 
-    iterator = tqdm(skf.split(x, y))
-
-    for train_index, test_index in iterator:
-        x_train, x_test = x.iloc[train_index], x.iloc[test_index]
-        y_train = [y[train_index] for train_index in train_index]
-        y_test = [y[train_index] for train_index in test_index]
+    iterator = tqdm(skf.split(x, y), desc='Outer CV for binary prediction')
+    for train_indexes, test_indexes in iterator:
+        x_train, x_test = x.iloc[train_indexes], x.iloc[test_indexes]
+        y_train = [y[train_index] for train_index in train_indexes]
+        y_test = [y[test_index] for test_index in test_indexes]
 
         # Instantiate the model fitting along a regularization path (CV).
         # Inner loop
