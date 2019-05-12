@@ -60,10 +60,12 @@ def get_compath_genesets(source, manager: CompathManager):
     """
     pathway_genesets = manager.export_gene_sets()
 
+    # Remove empty pathways (pathways without any gene associated to it)
     for key, value in pathway_genesets.items():
         if None in value:
             value.remove(None)
 
+    # Special case for KEGG (prefix needs to be removed)
     if source == KEGG:
         return {
             (source, manager.get_pathway_by_name(pathway_name).resource_id.replace('path:', '')): gene_set
@@ -71,6 +73,7 @@ def get_compath_genesets(source, manager: CompathManager):
             if gene_set
         }
 
+    # Convert dictionary from Pathway ID to Pathway Name
     return {
         (source, manager.get_pathway_by_name(pathway_name).resource_id): gene_set
         for pathway_name, gene_set in pathway_genesets.items()
@@ -79,7 +82,7 @@ def get_compath_genesets(source, manager: CompathManager):
 
 
 def create_geneset_df(all_pathway_genesets, mappings_dict):
-    """Create dataframe of gene sets for all pathways from all databases.
+    """Create dataframe of gene sets for all pathways from all databases using the mappings.
 
     The dataFrame also specifies genesets from 2 or more databases for equivalent pathways as merged genesets.
 
