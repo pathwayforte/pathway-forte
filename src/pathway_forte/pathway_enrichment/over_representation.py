@@ -15,13 +15,19 @@ from pathway_forte.constants import FC_COLUMNS, FOLD_CHANGE, GENE_SYMBOL
 log = logging.getLogger(__name__)
 
 
-def read_fold_change_df(file) -> pd.DataFrame:
+def read_fold_change_df(path) -> pd.DataFrame:
     """Read csv with gene names, fold changes and their pvalues."""
-    df = pd.read_csv(file)
+    df = pd.read_csv(path)
 
     # Check all columns are present
-    if any(column not in df for column in FC_COLUMNS):
-        raise ValueError(f'Any of the necessary columns: f{FC_COLUMNS} is not present. Please check.')
+
+    missing_columns = [
+        column
+        for column in FC_COLUMNS
+        if column not in df
+    ]
+    if missing_columns:
+        raise ValueError(f'Missing columns {", ".join(missing_columns)} in {path}')
 
     return df
 
