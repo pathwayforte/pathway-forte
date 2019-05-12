@@ -368,7 +368,9 @@ def get_pairwise_mapping_numbers(
     final_df = pd.concat([dfs[0], dfs[1], dfs[2]])
 
     equivalent_mappings_dict = get_mapping_dict(final_df, 'equivalentTo')
-    part_of_mappings_dict = get_mapping_dict(final_df, 'isPartOf')  # FIXME why isn't this used?
+    # Dictionary with hierarchical mappings. This dictionary is not used to build the gene set for now, but it could be
+    # used in the future for other applications
+    part_of_mappings_dict = get_mapping_dict(final_df, 'isPartOf')
 
     actual_mappings = {}
     expected_mappings = {}
