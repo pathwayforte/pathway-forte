@@ -1,6 +1,6 @@
 PathwayForte |build| |docs| |coverage| |zenodo|
 ===============================================
-A Python package for benchmarking pathway databases in functional enrichment and prediction methods
+A Python package for benchmarking pathway databases with functional enrichment and prediction methods
 tasks.
 
 Installation |pypi_version| |python_versions| |pypi_license|
