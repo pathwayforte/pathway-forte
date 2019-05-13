@@ -43,8 +43,8 @@ def ora():
 
 
 @ora.command()
-@click.option('-d', '--genesets', type=click.Path(exists=True), required=False, help='Path to GMT file')
-@click.option('-s', '--fold-changes', type=click.Path(exists=True), required=False, help='Path to fold changes file')
+@click.option('-d', '--genesets', type=click.Path(exists=True), required=True, help='Path to GMT file')
+@click.option('-s', '--fold-changes', type=click.Path(exists=True), required=True, help='Path to fold changes file')
 @click.option('--no-threshold', is_flag=True, help='Do not apply threshold')
 def geometric(genesets, fold_changes, no_threshold):
     """Performs one-tailed hyper geometric test enrichment."""

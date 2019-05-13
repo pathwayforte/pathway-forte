@@ -4,7 +4,7 @@
 
 import logging
 import os
-import pickle
+import json
 
 from pathway_forte.constants import CLASSIFIER_RESULTS, SSGSEA
 from pathway_forte.prediction.binary import get_l1_ratios
@@ -38,9 +38,10 @@ def do_survival_prediction(
     )
     logger.info(results)
 
-    results_path = os.path.join(CLASSIFIER_RESULTS, f'survival_results_{data}.pickle')
+    results_path = os.path.join(CLASSIFIER_RESULTS, f'survival_results_{data}.json')
 
-    # Export prediction metrics as a pickle
-    with open(results_path, 'wb') as file:
-        pickle.dump(results, file)
+    # Export prediction metrics as a JSON
+    with open(results_path, 'w') as file:
+        json.dump(results, file, sort_keys=True, indent=2)
+
     logger.info(f'Done with survival analysis. Results are exported in {results_path}')

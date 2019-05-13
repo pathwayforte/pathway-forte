@@ -2,12 +2,11 @@
 
 """CLI wrapper to perform ORA using one-tailed hyper-geometric tests."""
 
+import json
 import logging
 import os
-import pickle
 
 from gseapy.parser import gsea_gmt_parser
-
 from pathway_forte.pathway_enrichment.over_representation import (
     filter_fold_change_fd, perform_hypergeometric_test, read_fold_change_df,
 )
@@ -38,10 +37,9 @@ def do_geometric(genesets, fold_changes, threshold):
         apply_threshold=threshold,
     )
 
-    output = os.path.join(os.getcwd(), 'results.pickle')
+    output = os.path.join(os.getcwd(), 'results.json')
+    # Export dictionary as JSON
+    with open(output, 'w') as file:
+        json.dump(enriched_pathways, file, sort_keys=True, indent=2)
 
-    # Export dictionary as pickle
-    with open(output, 'wb') as file:
-        pickle.dump(enriched_pathways, file, protocol=4)
-
-    logger.info(f'Results exported to {output}')
+    logger.info(f'Results exported to {output}. # of pathways enriched {len(enriched_pathways)}')
