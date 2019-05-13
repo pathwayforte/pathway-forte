@@ -13,13 +13,13 @@ from pathway_forte.pathway_enrichment.over_representation import (
 )
 
 __all__ = [
-    'do_fisher_ora',
+    'do_geometric',
 ]
 
 logger = logging.getLogger(__name__)
 
 
-def do_fisher_ora(genesets, fold_changes, threshold):
+def do_geometric(genesets, fold_changes, threshold):
     if threshold:
         logger.info('Filtering out q values > 0.01 according to fdr_bh')
 
