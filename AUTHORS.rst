@@ -9,5 +9,4 @@ Maintainers
 
 Contributors
 ------------
-- Jan-Eric Boekenkamp
 - `Charles Tapley Hoyt <https://github.com/cthoyt>`_
