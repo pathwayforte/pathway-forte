@@ -6,6 +6,7 @@ import json
 import logging
 import os
 
+import pandas
 from gseapy.parser import gsea_gmt_parser
 
 from pathway_forte.pathway_enrichment.over_representation import (
@@ -19,7 +20,8 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-def do_geometric(genesets, fold_changes, threshold):
+def do_geometric(genesets: str, fold_changes: pandas.DataFrame, threshold: bool):
+    """Wrapper to run hyper-geometric test."""
     fc_df = read_fold_change_df(fold_changes)
 
     significant_genes = filter_p_value(fc_df, threshold)
