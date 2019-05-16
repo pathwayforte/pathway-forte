@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 def do_geometric(genesets, fold_changes, threshold):
     if threshold:
-        logger.info('Filtering out q values > 0.01 according to fdr_bh')
+        logger.info('Filtering out q values > 0.05 according to fdr_bh')
 
     fc_df = read_fold_change_df(fold_changes)
 

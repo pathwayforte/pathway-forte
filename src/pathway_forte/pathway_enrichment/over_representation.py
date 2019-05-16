@@ -37,7 +37,7 @@ def filter_fold_change_fd(df, p_value=False, fold_change_cutoff=2):
 
     # Apply p_value threshold too
     if p_value:
-        query_exp += ' & {P_VALUE} <= 0.01'
+        query_exp += ' & {P_VALUE} <= 0.05'
 
     filtered_df = df.query(query_exp)
 
@@ -77,7 +77,7 @@ def perform_hypergeometric_test(
         pathway_dict,
         gene_universe=41714,
         apply_threshold=False,
-        threshold=0.01,
+        threshold=0.05,
 ):
     """Perform hypergeometric tests.
 
