@@ -10,7 +10,7 @@ import pandas as pd
 from scipy.stats import fisher_exact
 from statsmodels.stats.multitest import multipletests
 
-from pathway_forte.constants import FC_COLUMNS, FOLD_CHANGE, GENE_SYMBOL
+from pathway_forte.constants import FC_COLUMNS, GENE_SYMBOL
 
 log = logging.getLogger(__name__)
 
@@ -31,17 +31,15 @@ def read_fold_change_df(path) -> pd.DataFrame:
     return df
 
 
-def filter_fold_change_fd(df, p_value=False, fold_change_cutoff=2):
+def filter_p_value(df, p_value=True, cutoff=0.05):
     """Return significantly differentially expressed genes in fold change df."""
-    query_exp = f'({FOLD_CHANGE} <= -{fold_change_cutoff} | {FOLD_CHANGE} >= {fold_change_cutoff})'
-
     # Apply p_value threshold too
     if p_value:
-        query_exp += ' & {P_VALUE} <= 0.05'
+        query_exp = f'padj <= {cutoff}'
 
-    filtered_df = df.query(query_exp)
+        df = df.query(query_exp)
 
-    return set(filtered_df[GENE_SYMBOL])
+    return set(df[GENE_SYMBOL])
 
 
 def _prepare_hypergeometric_test(query_gene_set: Set[str], pathway_gene_set: Set[str],

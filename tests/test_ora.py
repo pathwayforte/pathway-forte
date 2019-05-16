@@ -8,7 +8,7 @@ import unittest
 from gseapy.parser import gsea_gmt_parser
 
 from pathway_forte.pathway_enrichment.over_representation import (
-    filter_fold_change_fd, perform_hypergeometric_test, read_fold_change_df,
+    filter_p_value, perform_hypergeometric_test, read_fold_change_df,
 )
 
 TEST_FOLDER = os.path.dirname(os.path.realpath(__file__))
@@ -23,7 +23,7 @@ class TestOra(unittest.TestCase):
         """Test getting the genes out of the csv file."""
         fc_df = read_fold_change_df(FOLD_CHANGES_EXAMPLE)
 
-        significant_genes = filter_fold_change_fd(fc_df)
+        significant_genes = filter_p_value(fc_df)
         gene_sets = gsea_gmt_parser(GMT_EXAMPLE)
 
         self.assertEqual(significant_genes, {'C', 'A'})

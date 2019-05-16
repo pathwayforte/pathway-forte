@@ -221,7 +221,7 @@ GENESET_COLUMN_NAMES = {
 # Expected columns to do ORA analysis
 GENE_SYMBOL = 'gene_symbol'
 FOLD_CHANGE = 'log2FoldChange'
-P_VALUE = 'pvalue'
+P_VALUE = 'padj'
 
 FC_COLUMNS = {
     GENE_SYMBOL,
