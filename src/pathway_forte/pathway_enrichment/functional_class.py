@@ -354,8 +354,6 @@ def get_pairwise_mapping_numbers(
         kegg_pathway_df,
         reactome_pathway_df,
         wikipathways_pathway_df,
-        merged_pathway_df,
-        merged_total_df
 ):
     """Get number of existing versus expected pairwise mappings"""
     pairwise_comparison = [
@@ -393,50 +391,6 @@ def get_pairwise_mapping_numbers(
     # Get number of expected mappings between 2 resources
     for resources, mappings in expected_mappings.items():
         expected_num_dict[resources] = len(mappings)
-
-    # Get list of pathway IDs from the filtered merged dataFrame
-    merged_pathways_actual = merged_pathway_ids_to_list(merged_pathway_df)
-
-    # Get list of pathway IDs from the complete merged dataFrame
-    merged_pathways_total = merged_pathway_ids_to_list(merged_total_df)
-
-    # Get pathways in filtered merge dataset with mappings to pathway(s) from other resources
-    kegg_pathways_actual = check_pathway_ids(
-        kegg_pathway_df, KEGG, merged_pathways_actual, equivalent_mappings_dict
-    )
-    reactome_pathways_actual = check_pathway_ids(
-        reactome_pathway_df, REACTOME, merged_pathways_actual, equivalent_mappings_dict
-    )
-    wikipathways_pathways_actual = check_pathway_ids(
-        wikipathways_pathway_df, WIKIPATHWAYS, merged_pathways_actual, equivalent_mappings_dict
-    )
-
-    # Get pathways in total merge dataset with mappings to pathway(s) from other resources
-    kegg_pathways_expected = check_pathway_ids(
-        kegg_pathway_df, KEGG, merged_pathways_total, equivalent_mappings_dict
-    )
-    reactome_pathways_expected = check_pathway_ids(
-        reactome_pathway_df, REACTOME, merged_pathways_total, equivalent_mappings_dict
-    )
-    wikipathways_pathways_expected = check_pathway_ids(
-        wikipathways_pathway_df, WIKIPATHWAYS, merged_pathways_total, equivalent_mappings_dict
-    )
-
-    # Get set of all actual equivalent mappings in filtered merge dataset
-    actual_merge = \
-        set(tuple(mapping) for mapping in kegg_pathways_actual if mapping) | \
-        set(tuple(mapping) for mapping in reactome_pathways_actual if mapping) | \
-        set(tuple(mapping) for mapping in wikipathways_pathways_actual if mapping)
-
-    # Get set of all expected equivalent mappings in total merge dataset
-    expected_merge = \
-        set(tuple(mapping) for mapping in kegg_pathways_expected if mapping) | \
-        set(tuple(mapping) for mapping in reactome_pathways_expected if mapping) | \
-        set(tuple(mapping) for mapping in wikipathways_pathways_expected if mapping)
-
-    # Get number of actual and expected mappings for merge dataset
-    actual_num_dict['Merge dataset'] = len(actual_merge)
-    expected_num_dict['Merge dataset'] = len(expected_merge)
 
     return actual_num_dict, expected_num_dict
 
