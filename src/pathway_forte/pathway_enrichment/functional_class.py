@@ -455,7 +455,7 @@ def get_pairwise_mappings(
     return actual_mappings
 
 
-def compare_database_results(df_1, resource_1, df_2, resource_2, mapping_dict, check_contradiction=False):
+def compare_database_results(df_1, resource_1, df_2, resource_2, mapping_dict, check_contradiction=True):
     """Compare pathways in the dataframe from enrichment results to evaluate the concordance in similar pathways."""
 
     # Ensure index is set to pathway id column (not in place)
@@ -495,7 +495,7 @@ def compare_database_results(df_1, resource_1, df_2, resource_2, mapping_dict, c
                 # Check for contradictory results
                 if check_contradiction and \
                         sign(df_1.loc[pathway_resource_1]['nes']) != sign(df_2.loc[mapping_pathway_id]['nes']):
-                    contradictory_pathways.append(f"{df_1.loc[pathway_resource_1] | {df_2.loc[mapping_pathway_id]}}")
+                    contradictory_pathways.append((df_1.loc[pathway_resource_1], df_2.loc[mapping_pathway_id]))
 
     if check_contradiction:
         print(f"Total of #{len(contradictory_pathways)} contradictory pathways: {contradictory_pathways}")
