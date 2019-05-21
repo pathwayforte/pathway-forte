@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 """This module contain the functional class methods implemented in PathwayForte. For now, GSEA and ssGSEA"""
-from collections import defaultdict
 import itertools as itt
 import os
+from collections import defaultdict
 from typing import Optional
 
 import bio2bel_kegg
@@ -12,6 +12,7 @@ import bio2bel_wikipathways
 import gseapy
 import pandas as pd
 from gseapy.gsea import SingleSampleGSEA
+from numpy import sign
 
 from pathway_forte.constants import (
     CLASSES, GSEA, KEGG, MERGED_GENESET, PHENOTYPE_CLASSES, REACTOME, SSGSEA, WIKIPATHWAYS,
@@ -454,15 +455,21 @@ def get_pairwise_mappings(
     return actual_mappings
 
 
-def compare_database_results(df_1, resource_1, df_2, resource_2, mapping_dict):
+def compare_database_results(df_1, resource_1, df_2, resource_2, mapping_dict, check_contradiction=False):
     """Compare pathways in the dataframe from enrichment results to evaluate the concordance in similar pathways."""
 
-    # Get pathway IDs
-    df_1_ids = df_1['pathway_id'].tolist()
-    df_2_ids = df_2['pathway_id'].tolist()
+    # Ensure index is set to pathway id column (not in place)
+    df_1 = df_1.set_index('pathway_id')
+    df_2 = df_2.set_index('pathway_id')
+
+    # Get pathway ids as lists
+    df_1_ids = df_1.index.values
+    df_2_ids = df_2.index.values
 
     pathways_with_mappings = []
     matching_mappings = []
+
+    contradictory_pathways = []
 
     for pathway_resource_1 in df_1_ids:
 
@@ -484,6 +491,14 @@ def compare_database_results(df_1, resource_1, df_2, resource_2, mapping_dict):
             # Add all actual mappings to list
             if mapping_pathway_id in df_2_ids:
                 matching_mappings.append(mapping_pathway_id)
+
+                # Check for contradictory results
+                if check_contradiction and \
+                        sign(df_1.loc[pathway_resource_1]['nes']) != sign(df_2.loc[mapping_pathway_id]['nes']):
+                    contradictory_pathways.append(f"{df_1.loc[pathway_resource_1] | {df_2.loc[mapping_pathway_id]}}")
+
+    if check_contradiction:
+        print(f"Total of #{len(contradictory_pathways)} contradictory pathways: {contradictory_pathways}")
 
     return matching_mappings, pathways_with_mappings
 
