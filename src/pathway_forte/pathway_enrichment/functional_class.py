@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """This module contain the functional class methods implemented in PathwayForte. For now, GSEA and ssGSEA"""
-
+from collections import defaultdict
 import itertools as itt
 import os
 from typing import Optional
@@ -203,6 +203,35 @@ def rearrange_df_columns(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def get_pathway_names(
+        database,
+        pathway_df,
+        kegg_manager: Optional[bio2bel_kegg.Manager] = None,
+        reactome_manager: Optional[bio2bel_reactome.Manager] = None,
+        wikipathways_manager: Optional[bio2bel_wikipathways.Manager] = None
+):
+    if database == KEGG:
+        pathway_df['pathway_name'] = [
+            kegg_manager.get_pathway_by_id('path:' + pathway_id)
+            for pathway_id in list(pathway_df['pathway_id'])
+        ]
+        return pathway_df
+
+    elif database == REACTOME:
+        pathway_df['pathway_name'] = [
+            reactome_manager.get_pathway_by_id(pathway_id)
+            for pathway_id in list(pathway_df['pathway_id'])
+        ]
+        return pathway_df
+
+    elif database == WIKIPATHWAYS:
+        pathway_df['pathway_name'] = [
+            wikipathways_manager.get_pathway_by_id(pathway_id)
+            for pathway_id in list(pathway_df['pathway_id'])
+        ]
+        return pathway_df
+
+
 def pathway_names_to_df(
         filtered_gsea_results_df,
         all_pathway_ids,
@@ -279,6 +308,7 @@ def gsea_results_to_filtered_df(
         geneset_set_filter_minimum_size=None,
         geneset_set_filter_maximum_size=None
 ):
+    """Get filtered GSEA results dataFrames"""
     kegg_gsea_path = os.path.join(GSEA, KEGG, f'kegg_{dataset}.tsv')
     reactome_gsea_path = os.path.join(GSEA, REACTOME, f'reactome_{dataset}.tsv')
     wikipathways_gsea_path = os.path.join(GSEA, WIKIPATHWAYS, f'wikipathways_{dataset}.tsv')
@@ -395,8 +425,39 @@ def get_pairwise_mapping_numbers(
     return actual_num_dict, expected_num_dict
 
 
+def get_pairwise_mappings(
+        kegg_pathway_df,
+        reactome_pathway_df,
+        wikipathways_pathway_df,
+):
+    """Get pairwise mappings"""
+    pairwise_comparison = [
+        (kegg_pathway_df, KEGG),
+        (reactome_pathway_df, REACTOME),
+        (wikipathways_pathway_df, WIKIPATHWAYS),
+    ]
+    # Load mappings
+    dfs = load_compath_mapping_dfs()
+    # Get KEGG-Reactome, KEGG-WikiPathways and WikiPathways-Reactome mappings
+    final_df = pd.concat([dfs[0], dfs[1], dfs[2]])
+
+    equivalent_mappings_dict = get_mapping_dict(final_df, 'equivalentTo')
+
+    actual_mappings = {}
+
+    for (df1, resource1), (df2, resource2) in itt.permutations(pairwise_comparison, 2):
+        matching_mappings = get_matching_pairs(
+            df1, resource1, df2, resource2, equivalent_mappings_dict
+        )
+
+        actual_mappings[(resource1, resource2)] = matching_mappings
+    return actual_mappings
+
+
 def compare_database_results(df_1, resource_1, df_2, resource_2, mapping_dict):
-    """Compare pathways in the dataframe from GSEA results to evaluate the concordance in similar pathways."""
+    """Compare pathways in the dataframe from enrichment results to evaluate the concordance in similar pathways."""
+
+    # Get pathway IDs
     df_1_ids = df_1['pathway_id'].tolist()
     df_2_ids = df_2['pathway_id'].tolist()
 
@@ -409,7 +470,7 @@ def compare_database_results(df_1, resource_1, df_2, resource_2, mapping_dict):
         if (resource_1, pathway_resource_1) not in mapping_dict:
             continue
 
-        # Get pathway mappings
+        # Get all mappings for a pathway
         mappings_for_pathway = mapping_dict[(resource_1, pathway_resource_1)]
 
         for resource, mapping_pathway_id in mappings_for_pathway:
@@ -417,45 +478,48 @@ def compare_database_results(df_1, resource_1, df_2, resource_2, mapping_dict):
             if resource != resource_2:
                 continue
 
+            # Add all expected pathways to list
             pathways_with_mappings.append(mapping_pathway_id)
 
+            # Add all actual mappings to list
             if mapping_pathway_id in df_2_ids:
                 matching_mappings.append(mapping_pathway_id)
 
     return matching_mappings, pathways_with_mappings
 
 
-def merged_pathway_ids_to_list(df):
-    """Split pathway IDs in dataFrame and return list of pathway IDs."""
-    return [
-        pathway.split('|')
-        for pathway in df["pathway_id"].tolist()
-    ]
+def get_matching_pairs(df_1, resource_1, df_2, resource_2, equivalent_mappings_dict):
+    """Get equivalent pathways and their direction of change."""
 
+    df1_subset = df_1[['pathway_id', 'status']]
+    df1_tuples = [tuple(x) for x in df1_subset.values]
 
-def check_merged_pathways_for_matches(merged_pathways, pathway_id):
-    """Check if pathways in the merged data contain a specific pathway ID"""
-    for pathway_ids in merged_pathways:
-        if pathway_id in pathway_ids:
-            if 1 == len(pathway_ids):
-                print(pathway_ids)
-            return pathway_ids
+    df2_subset = df_2[['pathway_id', 'status']]
+    df2_tuples = [tuple(x) for x in df2_subset.values]
 
+    matching_mappings = defaultdict(list)
 
-def check_pathway_ids(source_df, source, merged_pathways_list, mappings_dict):
-    """Check pathway IDs for pathways with mappings"""
-    pathways_with_matches = []
+    for pathway_resource_1, direction_1 in df1_tuples:
 
-    # Get pathway id column
-    pathway_ids = source_df["pathway_id"].tolist()
-
-    for pathway_id in pathway_ids:
-        if (source, pathway_id) not in mappings_dict:
+        # Pathway does not have mappings
+        if (resource_1, pathway_resource_1) not in equivalent_mappings_dict:
             continue
 
-        pathways_with_matches.append(check_merged_pathways_for_matches(merged_pathways_list, pathway_id))
+        # Get all mappings for the pathway
+        mappings_for_pathway = equivalent_mappings_dict[(resource_1, pathway_resource_1)]
 
-    return pathways_with_matches
+        for resource, mapping_pathway_id in mappings_for_pathway:
+
+            if resource != resource_2:
+                continue
+
+            for pathway_resource_2, direction_2 in df2_tuples:
+
+                if pathway_resource_2 == mapping_pathway_id:
+                    matching_mappings[resource_1, pathway_resource_1, direction_1].append(
+                        (resource_2, pathway_resource_2, direction_2))
+
+    return matching_mappings
 
 
 def run_ssgsea(
