@@ -149,7 +149,7 @@ def filter_gsea_results(
     )
 
 
-def gsea_merge_statistics(merged_pathways_df: pd.DataFrame, dataset: str):
+def merge_statistics(merged_pathways_df: pd.DataFrame, dataset: str):
     """Get statistics for pathways included in the merged gene sets dataFrame.
 
     These include the proportion of pathways from each of the other databases and the proportion of pathways
@@ -167,12 +167,9 @@ def gsea_merge_statistics(merged_pathways_df: pd.DataFrame, dataset: str):
     merged_genesets = 0
 
     for pathway_id in merged_pathways_df['pathway_id']:
+
         if '|' in pathway_id:
             pathway_id.split('|')
-
-            # add pathway to total number of pathways
-            num_of_pathways += 1
-
             merged_genesets += 1
 
         if pathway_id.startswith('hsa'):
@@ -189,7 +186,7 @@ def gsea_merge_statistics(merged_pathways_df: pd.DataFrame, dataset: str):
     wikipathways_contributions_to_merged = num_of_wikipathways_in_merged / num_of_pathways * 100
     proportion_of_merged_genesets = merged_genesets / num_of_pathways * 100
 
-    print('For the top {} ranked pathways in the merged {} dataset:'.format(num_of_pathways, dataset))
+    print('For the {} pathways in the merged dataset results for {}:'.format(num_of_pathways, dataset))
     print('{0:.2f}% are from KEGG'.format(kegg_contributions_to_merged))
     print('{0:.2f}% are from Reactome'.format(reactome_contributions_to_merged))
     print('{0:.2f}% are from WikiPathways'.format(wikipathways_contributions_to_merged))
