@@ -5,6 +5,7 @@
 import json
 import logging
 import os
+from typing import Optional
 
 import pandas
 from gseapy.parser import gsea_gmt_parser
@@ -20,7 +21,12 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-def do_geometric(genesets: str, fold_changes: pandas.DataFrame, threshold: bool):
+def do_geometric(
+        genesets: str,
+        fold_changes: pandas.DataFrame,
+        threshold: bool,
+        output: Optional[str] = None,
+):
     """Wrapper to run hyper-geometric test."""
     fc_df = read_fold_change_df(fold_changes)
 
@@ -40,7 +46,9 @@ def do_geometric(genesets: str, fold_changes: pandas.DataFrame, threshold: bool)
     if threshold:
         logger.info('Filtering out pathways with q values > 0.05 according to fdr_bh')
 
-    output = os.path.join(os.getcwd(), 'results.json')
+    if output is None:
+        output = os.path.join(os.getcwd(), 'results.json')
+
     # Export dictionary as JSON
     with open(output, 'w') as file:
         json.dump(enriched_pathways, file, sort_keys=True, indent=2)

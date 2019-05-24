@@ -10,7 +10,7 @@ import pandas as pd
 from scipy.stats import fisher_exact
 from statsmodels.stats.multitest import multipletests
 
-from pathway_forte.constants import FC_COLUMNS, GENE_SYMBOL
+from pathway_forte.constants import FC_COLUMNS, GENE_SYMBOL, P_VALUE
 
 log = logging.getLogger(__name__)
 
@@ -35,7 +35,6 @@ def filter_p_value(df, p_value=True, cutoff=0.05):
     """Return significantly differentially expressed genes in fold change df."""
     # Apply p_value threshold too
     if p_value:
-
         query_exp = f'{P_VALUE} <= {cutoff}'
 
         df = df.query(query_exp)
