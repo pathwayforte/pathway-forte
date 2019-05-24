@@ -8,9 +8,8 @@ from typing import Tuple
 import pandas as pd
 
 from pathway_forte.constants import (
-    IS_PART_OF, KEGG, KEGG_REACTOME_URL, KEGG_WP_URL, MAPPING_TYPE, SOURCE_ID,
-    SOURCE_RESOURCE, SPECIAL_MAPPINGS_URL, TARGET_ID, TARGET_RESOURCE, WP_REACTOME_URL,
-)
+    IS_PART_OF, KEGG, MAPPING_TYPE, SOURCE_ID,
+    SOURCE_RESOURCE, TARGET_ID, TARGET_RESOURCE, )
 
 __all__ = [
     'get_mapping_dict',
@@ -80,10 +79,11 @@ def get_equivalent_pairs(df: pd.DataFrame):
 
 def load_compath_mapping_dfs() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Load ComPath mappings dataframes."""
-    kegg_reactome_df = pd.read_csv(KEGG_REACTOME_URL)
-    kegg_wikipathways_df = pd.read_csv(KEGG_WP_URL)
-    wikipathways_reactome_df = pd.read_csv(WP_REACTOME_URL)
-    special_mappings_df = pd.read_csv(SPECIAL_MAPPINGS_URL)
+    kegg_reactome_df = pd.read_csv('/Users/danieldomingo/PycharmProjects/resources/mappings/kegg_reactome.csv')
+    kegg_wikipathways_df = pd.read_csv('/Users/danieldomingo/PycharmProjects/resources/mappings/kegg_reactome.csv')
+    wikipathways_reactome_df = pd.read_csv(
+        '/Users/danieldomingo/PycharmProjects/resources/mappings/wikipathways_reactome.csv')
+    special_mappings_df = pd.read_csv('/Users/danieldomingo/PycharmProjects/resources/mappings/special_mappings.csv')
     return (
         kegg_reactome_df,
         kegg_wikipathways_df,
@@ -105,3 +105,27 @@ def get_equivalent_mappings_dict():
         pd.concat([kegg_reactome_df, kegg_wikipathways_df, wikipathways_reactome_df]),
         'equivalentTo'
     )
+
+
+def get_wikipathways(pathways):
+    return {
+        pathway: pathway
+        for pathway in pathways
+        if str(pathway).startswith('WP')
+    }
+
+
+def get_reactomes(pathways):
+    return {
+        pathway: f"R-HSA-{pathway}"
+        for pathway in pathways
+        if not str(pathway).startswith('WP') and len(str(pathway)) > 4
+    }
+
+
+def get_keggs(pathways):
+    return {
+        pathway: f"hsa0{pathway}"
+        for pathway in pathways
+        if not str(pathway).startswith('WP') and len(str(pathway)) <= 4
+    }
