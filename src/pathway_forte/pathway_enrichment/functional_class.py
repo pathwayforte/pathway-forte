@@ -455,13 +455,26 @@ def get_analogs_comparison_numbers(
     )
 
     expected_num_dict = {
-        (KEGG, REACTOME): 58,
-        (REACTOME, KEGG): 58,
-        (KEGG, WIKIPATHWAYS): 58,
-        (WIKIPATHWAYS, KEGG): 58,
-        (REACTOME, WIKIPATHWAYS): 65,
-        (WIKIPATHWAYS, REACTOME): 65,
+        (KEGG, REACTOME): len(
+            get_pathways_by_resource(kegg_reactome_pathway_df["pathway_id"], KEGG)
+        ),
+        (REACTOME, KEGG): len(
+            get_pathways_by_resource(kegg_reactome_pathway_df["pathway_id"], REACTOME)
+        ),
+        (REACTOME, WIKIPATHWAYS): len(
+            get_pathways_by_resource(reactome_wikipathways_pathway_df["pathway_id"], REACTOME)
+        ),
+        (WIKIPATHWAYS, REACTOME): len(
+            get_pathways_by_resource(reactome_wikipathways_pathway_df["pathway_id"], WIKIPATHWAYS)
+        ),
+        (KEGG, WIKIPATHWAYS): len(
+            get_pathways_by_resource(wikipathways_kegg_pathway_df["pathway_id"], KEGG)
+        ),
+        (WIKIPATHWAYS, KEGG): len(
+            get_pathways_by_resource(wikipathways_kegg_pathway_df["pathway_id"], WIKIPATHWAYS)
+        ),
     }
+
     return actual_num_dict, expected_num_dict
 
 
