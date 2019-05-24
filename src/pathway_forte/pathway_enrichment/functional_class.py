@@ -17,7 +17,7 @@ from numpy import sign
 from pathway_forte.constants import (
     CLASSES, GSEA, KEGG, MERGED_GENESET, PHENOTYPE_CLASSES, REACTOME, SSGSEA, WIKIPATHWAYS,
 )
-from pathway_forte.mappings import get_mapping_dict, load_compath_mapping_dfs
+from pathway_forte.mappings import get_mapping_dict, load_compath_mapping_dfs, get_equivalent_mappings_dict
 from pathway_forte.pathway_enrichment.over_representation import log
 from pathway_forte.utils import get_num_samples
 
@@ -376,6 +376,93 @@ def gsea_results_to_filtered_df(
         merged_pathway_df,
         merged_total_df,
     )
+
+
+def get_pathways_by_resource(pathways: iter, resource: str) -> list:
+    """Return pathways by resource."""
+    if resource == KEGG:
+        return [
+            pathway
+            for pathway in pathways
+            if pathway.startswith('hsa')
+        ]
+
+    elif resource == REACTOME:
+        return [
+            pathway
+            for pathway in pathways
+            if pathway.startswith('R-HSA-')
+        ]
+
+    elif resource == WIKIPATHWAYS:
+        return [
+            pathway
+            for pathway in pathways
+            if pathway.startswith('WP')
+        ]
+
+    raise ValueError(f'Pathway database {resource} not found')
+
+
+def _pairwise_helper(pathways, mappings, source_resource, target_resource):
+    """Helper for pairwise comparing pathways."""
+    counter = 0
+
+    source_pathways = get_pathways_by_resource(pathways, source_resource)
+    target_pathways = get_pathways_by_resource(pathways, target_resource)
+
+    for source_pathway in source_pathways:
+
+        if (source_resource, source_pathway) not in mappings:
+            continue
+
+        if any(mapping in target_pathways for _, mapping in mappings[(source_resource, source_pathway)]):
+            counter += 1
+
+    return counter
+
+
+def get_analogs_comparison_numbers(
+        kegg_reactome_pathway_df,
+        reactome_wikipathways_pathway_df,
+        wikipathways_kegg_pathway_df,
+):
+    """Get number of existing versus expected pairwise mappings"""
+    # Load mappings
+    equivalent_mappings_dict = get_equivalent_mappings_dict()
+
+    actual_num_dict = {}
+
+    actual_num_dict[(KEGG, REACTOME)] = _pairwise_helper(
+        kegg_reactome_pathway_df["pathway_id"], equivalent_mappings_dict, KEGG, REACTOME
+    )
+    actual_num_dict[(REACTOME, KEGG)] = _pairwise_helper(
+        kegg_reactome_pathway_df["pathway_id"], equivalent_mappings_dict, KEGG, REACTOME
+    )
+
+    actual_num_dict[(REACTOME, WIKIPATHWAYS)] = _pairwise_helper(
+        reactome_wikipathways_pathway_df["pathway_id"], equivalent_mappings_dict, REACTOME, WIKIPATHWAYS
+    )
+    actual_num_dict[(WIKIPATHWAYS, REACTOME)] = _pairwise_helper(
+        reactome_wikipathways_pathway_df["pathway_id"], equivalent_mappings_dict, WIKIPATHWAYS, REACTOME
+    )
+
+    actual_num_dict[(WIKIPATHWAYS, KEGG)] = _pairwise_helper(
+        wikipathways_kegg_pathway_df["pathway_id"], equivalent_mappings_dict, WIKIPATHWAYS, KEGG
+    )
+    actual_num_dict[(KEGG, WIKIPATHWAYS)] = _pairwise_helper(
+        wikipathways_kegg_pathway_df["pathway_id"], equivalent_mappings_dict, KEGG, WIKIPATHWAYS
+    )
+
+    expected_num_dict = {
+        (KEGG, REACTOME): 58,
+        (REACTOME, KEGG): 58,
+        (KEGG, WIKIPATHWAYS): 58,
+        (WIKIPATHWAYS, KEGG): 58,
+        (REACTOME, WIKIPATHWAYS): 65,
+        (WIKIPATHWAYS, REACTOME): 65,
+    }
+    return actual_num_dict, expected_num_dict
 
 
 def get_pairwise_mapping_numbers(
