@@ -3,23 +3,37 @@
 """Function to deal with ComPath mappings."""
 
 from collections import defaultdict
-from typing import Tuple
+from typing import List, Mapping, Tuple
 
+import numpy as np
 import pandas as pd
+from bio2bel.downloading import make_df_getter
+from scipy.stats import wilcoxon
 
-from pathway_forte.constants import (
-    IS_PART_OF, KEGG, MAPPING_TYPE, SOURCE_ID,
-    SOURCE_RESOURCE, TARGET_ID, TARGET_RESOURCE, )
+from .constants import (
+    IS_PART_OF, KEGG, KEGG_REACTOME_PATH, KEGG_REACTOME_URL, KEGG_WP_PATH, KEGG_WP_URL, MAPPING_TYPE, SOURCE_ID,
+    SOURCE_RESOURCE, SPECIAL_MAPPINGS_PATH, SPECIAL_MAPPINGS_URL, TARGET_ID, TARGET_RESOURCE, WP_REACTOME_PATH,
+    WP_REACTOME_URL,
+)
 
 __all__ = [
     'get_mapping_dict',
     'get_equivalent_pairs',
     'load_compath_mapping_dfs',
     'get_equivalent_mappings_dict',
+    'remap_comparison_df',
+    'get_equivalent_mapping_wilcoxon',
 ]
 
+Identifier = Tuple[str, str]
 
-def get_mapping_dict(df: pd.DataFrame, mapping_type: str):
+get_kegg_reactome_df = make_df_getter(KEGG_REACTOME_URL, KEGG_REACTOME_PATH)
+get_wp_reactome_df = make_df_getter(WP_REACTOME_URL, WP_REACTOME_PATH)
+get_kegg_wp_df = make_df_getter(KEGG_WP_URL, KEGG_WP_PATH)
+get_special_mappings_df = make_df_getter(SPECIAL_MAPPINGS_URL, SPECIAL_MAPPINGS_PATH)
+
+
+def get_mapping_dict(df: pd.DataFrame, mapping_type: str) -> Mapping[Identifier, List[Identifier]]:
     """Create a dictionary with ComPath mappings for each pathway."""
     mapping_dict = defaultdict(list)
 
@@ -43,7 +57,7 @@ def get_mapping_dict(df: pd.DataFrame, mapping_type: str):
             mapping_dict[(row[TARGET_RESOURCE], row[TARGET_ID])].append(
                 (row[SOURCE_RESOURCE], row[SOURCE_ID].replace("path:", "")))
 
-    return mapping_dict
+    return dict(mapping_dict)
 
 
 def get_equivalent_pairs(df: pd.DataFrame):
@@ -78,12 +92,12 @@ def get_equivalent_pairs(df: pd.DataFrame):
 
 
 def load_compath_mapping_dfs() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Load ComPath mappings dataframes."""
-    kegg_reactome_df = pd.read_csv('/Users/danieldomingo/PycharmProjects/resources/mappings/kegg_reactome.csv')
-    kegg_wikipathways_df = pd.read_csv('/Users/danieldomingo/PycharmProjects/resources/mappings/kegg_reactome.csv')
-    wikipathways_reactome_df = pd.read_csv(
-        '/Users/danieldomingo/PycharmProjects/resources/mappings/wikipathways_reactome.csv')
-    special_mappings_df = pd.read_csv('/Users/danieldomingo/PycharmProjects/resources/mappings/special_mappings.csv')
+    """Load ComPath mappings data frames."""
+    kegg_reactome_df = get_kegg_reactome_df()
+    kegg_wikipathways_df = get_kegg_wp_df()
+    wikipathways_reactome_df = get_wp_reactome_df()
+    special_mappings_df = get_special_mappings_df()
+
     return (
         kegg_reactome_df,
         kegg_wikipathways_df,
@@ -92,7 +106,7 @@ def load_compath_mapping_dfs() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame
     )
 
 
-def get_equivalent_mappings_dict():
+def get_equivalent_mappings_dict() -> Mapping[Identifier, List[Identifier]]:
     """Get mapping dictionary of all equivalent pairs of pathways.
 
     Special mappings are not included in the overall mappings as some of the WP pathways possess identical IDs.
@@ -129,3 +143,87 @@ def get_keggs(pathways):
         for pathway in pathways
         if not str(pathway).startswith('WP') and len(str(pathway)) <= 4
     }
+
+
+def remap_comparison_df(
+        df: pd.DataFrame,
+        source_db: str,
+        target_db: str,
+        db_column_name: str = 'db',
+        identifier_column_name: str = 'Term',
+        pval_column_name: str = 'pval',
+        *,
+        equivalent_mappings_dict=None,
+) -> pd.DataFrame:
+    """
+    
+    :param df: 
+    :param source_db: This is the database that becomes the left one
+    :param target_db:
+    :param equivalent_mappings_dict: 
+    :return: 
+    """
+    if equivalent_mappings_dict is None:
+        equivalent_mappings_dict = get_equivalent_mappings_dict()
+
+    source_indexes = df[db_column_name] == source_db
+
+    rows = []
+    for i, (source_identifier, source_pval) in df.loc[source_indexes, [identifier_column_name, pval_column_name]].iterrows():
+        target_identifier, target_pval = None, 1.0
+        for x, y in equivalent_mappings_dict[source_db, source_identifier]:
+            if target_db == x:
+                target_identifier = y
+
+                pval_rows = df[df[identifier_column_name] == target_identifier]
+                try:
+                    target_pval = pval_rows.iloc[0][pval_column_name]
+                except IndexError:  # haha fuck you!
+                    target_pval = 1.0
+
+        rows.append((
+            source_db,
+            source_identifier,
+            source_pval,
+            target_db,
+            target_identifier,
+            target_pval,
+            np.log10(source_pval) - np.log10(target_pval),
+        ))
+
+    return pd.DataFrame(
+        rows,
+        columns=[
+            'source_db',
+            'source_identifier',
+            'source_pval',
+            'target_db',
+            'target_identifier',
+            'target_pval',
+            'pval_diff',
+        ]
+    )
+
+
+def get_equivalent_mapping_wilcoxon(
+        df: pd.DataFrame,
+        source_db: str,
+        target_db: str,
+        db_column_name: str = 'db',
+        identifier_column_name: str = 'Term',
+        pval_column_name: str = 'pval',
+        *,
+        equivalent_mappings_dict=None,
+) -> float:
+    remapped_df = remap_comparison_df(
+        df=df,
+        source_db=source_db,
+        target_db=target_db,
+        db_column_name=db_column_name,
+        identifier_column_name=identifier_column_name,
+        pval_column_name=pval_column_name,
+        equivalent_mappings_dict=equivalent_mappings_dict,
+    )
+
+    _, p_value = wilcoxon(remapped_df.pval_diff.tolist())
+    return p_value

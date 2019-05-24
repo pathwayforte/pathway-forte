@@ -6,12 +6,16 @@ import logging
 import os
 import time
 
+from bio2bel import get_data_dir
+
 log = logging.getLogger(__name__)
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 SOURCE = os.path.join(os.path.abspath(os.path.join(dir_path, os.pardir)))
 # Data folder where gene sets files are
 DATA = os.path.join(os.path.abspath(os.path.join(SOURCE, os.pardir)), 'data')
+
+BIO2BEL_DATA_DIR = get_data_dir('pathwayforte')
 
 """Cancer Data Sets"""
 
@@ -178,9 +182,16 @@ CONCATENATED_MERGE_GENE_SETS = os.path.join(GMT_FOLDER, 'concatenated_merge.gmt'
 
 # Get csv pairwise mapping files
 KEGG_REACTOME_URL = "https://raw.githubusercontent.com/ComPath/resources/master/mappings/kegg_reactome.csv"
+KEGG_REACTOME_PATH = os.path.join(BIO2BEL_DATA_DIR, KEGG_REACTOME_URL.split('/')[-1])
+
 KEGG_WP_URL = "https://raw.githubusercontent.com/ComPath/resources/master/mappings/kegg_wikipathways.csv"
+KEGG_WP_PATH = os.path.join(BIO2BEL_DATA_DIR, KEGG_WP_URL.split('/')[-1])
+
 WP_REACTOME_URL = "https://raw.githubusercontent.com/ComPath/resources/master/mappings/wikipathways_reactome.csv"
+WP_REACTOME_PATH = os.path.join(BIO2BEL_DATA_DIR, WP_REACTOME_URL.split('/')[-1])
+
 SPECIAL_MAPPINGS_URL = "https://raw.githubusercontent.com/ComPath/resources/master/mappings/special_mappings.csv"
+SPECIAL_MAPPINGS_PATH = os.path.join(BIO2BEL_DATA_DIR, SPECIAL_MAPPINGS_URL.split('/')[-1])
 
 # Columns of the ComPath mapping data frame
 RESOURCE = 'Resource'
