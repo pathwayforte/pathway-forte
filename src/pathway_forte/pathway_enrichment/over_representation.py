@@ -35,7 +35,8 @@ def filter_p_value(df, p_value=True, cutoff=0.05):
     """Return significantly differentially expressed genes in fold change df."""
     # Apply p_value threshold too
     if p_value:
-        query_exp = f'padj <= {cutoff}'
+
+        query_exp = f'{P_VALUE} <= {cutoff}'
 
         df = df.query(query_exp)
 
