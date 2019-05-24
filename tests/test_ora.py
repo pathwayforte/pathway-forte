@@ -5,6 +5,7 @@
 import os
 import unittest
 
+import pandas as pd
 from gseapy.parser import gsea_gmt_parser
 
 from pathway_forte.pathway_enrichment.over_representation import (
@@ -29,11 +30,12 @@ class TestOra(unittest.TestCase):
         self.assertEqual(significant_genes, {'C', 'A'})
         self.assertEqual(gene_sets, {'pathway1': ['A', 'B', 'C', 'D'], 'pathway2': ['E', 'F', 'G', 'H']})
 
-        enriched_pathways = perform_hypergeometric_test(
+        enriched_pathways_df = perform_hypergeometric_test(
             significant_genes,
             gene_sets,
             apply_threshold=True,
         )
 
-        self.assertEqual(len(enriched_pathways.keys()), 1)
-        self.assertIn('pathway1', enriched_pathways.keys())
+        self.assertIsInstance(enriched_pathways_df, pd.DataFrame)
+        self.assertEqual(len(enriched_pathways_df.keys()), 1)
+        self.assertIn('pathway1', enriched_pathways_df.keys())

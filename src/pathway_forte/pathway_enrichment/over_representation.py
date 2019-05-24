@@ -3,7 +3,7 @@
 """This module contains the functions to run Over Representation Analysis (ORA)."""
 
 import logging
-from typing import Set
+from typing import Mapping, Set
 
 import numpy as np
 import pandas as pd
@@ -72,45 +72,32 @@ def _prepare_hypergeometric_test(query_gene_set: Set[str], pathway_gene_set: Set
 
 def perform_hypergeometric_test(
         genes_to_test: Set[str],
-        pathway_dict,
-        gene_universe=41714,
-        apply_threshold=False,
-        threshold=0.05,
-):
+        pathway_dict: Mapping[str, Set[str]],
+        gene_universe: int = 41714,
+        apply_threshold: bool = False,
+        threshold: float = 0.05,
+) -> pd.DataFrame:
     """Perform hypergeometric tests.
 
     :param genes_to_test: gene set to test against pathway
-    :param dict[str,set] pathway_dict: pathway name to gene set
-    :param int gene_universe: number of HGNC symbols
-    :param Optional[bool] apply_threshold: return only significant pathways
-    :param Optional[float] threshold: significance threshold (by default 0.05)
-    :rtype: dict[str,dict[str,dict]]
-    :return: manager_pathways_dict with p value info
+    :param pathway_dict: pathway name to gene set
+    :param gene_universe: number of HGNC symbols
+    :param apply_threshold: return only significant pathways
+    :param threshold: significance threshold (by default 0.05)
     """
-    pathway_to_p_value = dict()
-    results = dict()
-
+    rows = []
     for pathway_id, pathway_gene_set in pathway_dict.items():
         # Prepare the test table to conduct the fisher test
         test_table = _prepare_hypergeometric_test(genes_to_test, pathway_gene_set, gene_universe)
+        # Calculate fisher test (returns tuple of odds ratio and p_value
+        p_value = fisher_exact(test_table, alternative='greater')[1]
+        rows.append((pathway_id, p_value))
 
-        # Calculate fisher test
-        oddsratio, pvalue = fisher_exact(test_table, alternative='greater')
+    df = pd.DataFrame(rows, columns=['pathway_id', 'pval'])
+    correction_test = multipletests(df.pval, method='fdr_bh')
+    df['qval'] = correction_test[1]
 
-        pathway_to_p_value[pathway_id] = pvalue
+    if apply_threshold:
+        df = df[df['qval'] < threshold]
 
-    # Split the dictionary into names_id tuples and p values to keep the same order
-    manager_pathway_id, p_values = zip(*pathway_to_p_value.items())
-    correction_test = multipletests(p_values, method='fdr_bh')
-
-    q_values = correction_test[1]
-
-    # Update original dict with p value corrections
-    for i, pathway_id in enumerate(manager_pathway_id):
-        results[pathway_id] = q_value = round(q_values[i], 4)
-
-        # [Optional] Delete the pathway if does not pass the threshold
-        if apply_threshold and q_value > threshold:
-            del results[pathway_id]
-
-    return results
+    return df

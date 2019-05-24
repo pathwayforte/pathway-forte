@@ -17,7 +17,7 @@ from numpy import sign
 from pathway_forte.constants import (
     CLASSES, GSEA, KEGG, MERGED_GENESET, PHENOTYPE_CLASSES, REACTOME, SSGSEA, WIKIPATHWAYS,
 )
-from pathway_forte.mappings import get_mapping_dict, load_compath_mapping_dfs, get_equivalent_mappings_dict
+from pathway_forte.mappings import get_equivalent_mappings_dict, get_mapping_dict, load_compath_mapping_dfs
 from pathway_forte.pathway_enrichment.over_representation import log
 from pathway_forte.utils import get_num_samples
 
