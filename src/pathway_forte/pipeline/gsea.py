@@ -34,12 +34,11 @@ def do_gsea(data, permutations):
         logger.info('Creating cls file')
         create_cls_file(gene_exp, num_normal_samples, num_tumor_samples, data)
 
-    kegg_gene_set, reactome_gene_set, wikipathways_gene_set, merge_gene_set = check_gmt_files()
+    kegg_gene_set, reactome_gene_set, wikipathways_gene_set, _ = check_gmt_files()
     _ds = [
         ('KEGG', kegg_gene_set, KEGG_GSEA, KEGG_GSEA_TSV),
         ('Reactome', reactome_gene_set, REACTOME_GSEA, REACTOME_GSEA_TSV),
         ('WikiPathways', wikipathways_gene_set, WIKIPATHWAYS_GSEA, WIKIPATHWAYS_GSEA_TSV),
-        ('MergeDataset', merge_gene_set, MERGE_GSEA, MERGE_GSEA_TSV),
     ]
     for name, gene_set, output_dir, tsv_fmt in _ds:
         logger.info(f'Running {name}')
