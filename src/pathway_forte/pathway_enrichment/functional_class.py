@@ -427,6 +427,8 @@ def get_analogs_comparison_numbers(
         kegg_reactome_pathway_df,
         reactome_wikipathways_pathway_df,
         wikipathways_kegg_pathway_df,
+        *,
+        pathway_column="pathway_id"
 ):
     """Get number of existing versus expected pairwise mappings"""
     # Load mappings
@@ -437,27 +439,27 @@ def get_analogs_comparison_numbers(
     # IMPORTANT! These two dictionaries should be keep in the same order as the next one (TO PLOT IN THE RIGHT ORDER)
 
     actual_num_dict[(KEGG, REACTOME)] = _pairwise_helper(
-        kegg_reactome_pathway_df["pathway_id"], equivalent_mappings_dict, KEGG, REACTOME
+        kegg_reactome_pathway_df[pathway_column], equivalent_mappings_dict, KEGG, REACTOME
     )
 
     actual_num_dict[(KEGG, WIKIPATHWAYS)] = _pairwise_helper(
-        wikipathways_kegg_pathway_df["pathway_id"], equivalent_mappings_dict, KEGG, WIKIPATHWAYS
+        wikipathways_kegg_pathway_df[pathway_column], equivalent_mappings_dict, KEGG, WIKIPATHWAYS
     )
 
     actual_num_dict[(REACTOME, KEGG)] = _pairwise_helper(
-        kegg_reactome_pathway_df["pathway_id"], equivalent_mappings_dict, REACTOME, KEGG
+        kegg_reactome_pathway_df[pathway_column], equivalent_mappings_dict, REACTOME, KEGG
     )
 
     actual_num_dict[(REACTOME, WIKIPATHWAYS)] = _pairwise_helper(
-        reactome_wikipathways_pathway_df["pathway_id"], equivalent_mappings_dict, REACTOME, WIKIPATHWAYS
+        reactome_wikipathways_pathway_df[pathway_column], equivalent_mappings_dict, REACTOME, WIKIPATHWAYS
     )
 
     actual_num_dict[(WIKIPATHWAYS, KEGG)] = _pairwise_helper(
-        wikipathways_kegg_pathway_df["pathway_id"], equivalent_mappings_dict, WIKIPATHWAYS, KEGG
+        wikipathways_kegg_pathway_df[pathway_column], equivalent_mappings_dict, WIKIPATHWAYS, KEGG
     )
 
     actual_num_dict[(WIKIPATHWAYS, REACTOME)] = _pairwise_helper(
-        reactome_wikipathways_pathway_df["pathway_id"], equivalent_mappings_dict, WIKIPATHWAYS, REACTOME
+        reactome_wikipathways_pathway_df[pathway_column], equivalent_mappings_dict, WIKIPATHWAYS, REACTOME
     )
 
     # Ensure the number of equivalent pathways are the same
@@ -474,22 +476,22 @@ def get_analogs_comparison_numbers(
 
     expected_num_dict = {
         (KEGG, REACTOME): len(
-            get_pathways_by_resource(kegg_reactome_pathway_df["pathway_id"], KEGG)
+            get_pathways_by_resource(kegg_reactome_pathway_df[pathway_column], KEGG)
         ),
         (KEGG, WIKIPATHWAYS): len(
-            get_pathways_by_resource(wikipathways_kegg_pathway_df["pathway_id"], KEGG)
+            get_pathways_by_resource(wikipathways_kegg_pathway_df[pathway_column], KEGG)
         ),
         (REACTOME, KEGG): len(
-            get_pathways_by_resource(kegg_reactome_pathway_df["pathway_id"], REACTOME)
+            get_pathways_by_resource(kegg_reactome_pathway_df[pathway_column], REACTOME)
         ),
         (REACTOME, WIKIPATHWAYS): len(
-            get_pathways_by_resource(reactome_wikipathways_pathway_df["pathway_id"], REACTOME)
+            get_pathways_by_resource(reactome_wikipathways_pathway_df[pathway_column], REACTOME)
         ),
         (WIKIPATHWAYS, KEGG): len(
-            get_pathways_by_resource(wikipathways_kegg_pathway_df["pathway_id"], WIKIPATHWAYS)
+            get_pathways_by_resource(wikipathways_kegg_pathway_df[pathway_column], WIKIPATHWAYS)
         ),
         (WIKIPATHWAYS, REACTOME): len(
-            get_pathways_by_resource(reactome_wikipathways_pathway_df["pathway_id"], WIKIPATHWAYS)
+            get_pathways_by_resource(reactome_wikipathways_pathway_df[pathway_column], WIKIPATHWAYS)
         ),
     }
 
