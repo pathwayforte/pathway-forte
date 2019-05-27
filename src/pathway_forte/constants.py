@@ -146,7 +146,7 @@ def check_gmt_files():
         elif file.startswith('wikipathways_geneset'):
             wikipathways_gmt_file = os.path.join(GMT_FOLDER, file)
 
-        elif file.startswith('merged_geneset'):
+        elif file.startswith('mpath_geneset'):
             merge_gmt_file = os.path.join(GMT_FOLDER, file)
 
         elif file.startswith('msigdb') or file == 'README.rst' or file == 'concatenated_merge.gmt':
@@ -169,7 +169,7 @@ TODAY = time.strftime("%d_%m_%Y")
 NEW_KEGG_GENE_SETS = os.path.join(GMT_FOLDER, f'kegg_geneset{TODAY}.gmt')
 NEW_REACTOME_GENE_SETS = os.path.join(GMT_FOLDER, f'reactome_geneset{TODAY}.gmt')
 NEW_WIKIPATHWAYS_GENE_SETS = os.path.join(GMT_FOLDER, f'wikipathways_geneset{TODAY}.gmt')
-NEW_MERGED_GENE_SETS = os.path.join(GMT_FOLDER, f'merged_geneset{TODAY}.gmt')
+NEW_MERGED_GENE_SETS = os.path.join(GMT_FOLDER, f'mpath_geneset{TODAY}.gmt')
 
 TEMP_KEGG_PATHWAY_GENESET_CSV = os.path.join(GMT_FOLDER, 'kegg_pathway_geneset.csv')
 TEMP_REACTOME_PATHWAY_GENESET_CSV = os.path.join(GMT_FOLDER, 'reactome_pathway_geneset.csv')
@@ -207,7 +207,7 @@ SOURCE_ID = "Source ID"
 KEGG = "kegg"
 REACTOME = 'reactome'
 WIKIPATHWAYS = 'wikipathways'
-MERGED_GENESET = 'merge'
+MPATH = 'mpath'
 MSIG = 'msig'
 CONCATENATED_MERGE = 'concatenated_merge'
 
@@ -216,7 +216,7 @@ PATHWAY_RESOURCES = [
     KEGG,
     REACTOME,
     WIKIPATHWAYS,
-    MERGED_GENESET,
+    MPATH,
     MSIG,
     CONCATENATED_MERGE,
 ]

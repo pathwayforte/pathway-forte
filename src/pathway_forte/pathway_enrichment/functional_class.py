@@ -15,7 +15,7 @@ from gseapy.gsea import SingleSampleGSEA
 from numpy import sign
 
 from pathway_forte.constants import (
-    CLASSES, GSEA, KEGG, MERGED_GENESET, PHENOTYPE_CLASSES, REACTOME, SSGSEA, WIKIPATHWAYS,
+    CLASSES, GSEA, KEGG, MPATH, PHENOTYPE_CLASSES, REACTOME, SSGSEA, WIKIPATHWAYS,
 )
 from pathway_forte.mappings import get_equivalent_mappings_dict, get_mapping_dict, load_compath_mapping_dfs
 from pathway_forte.pathway_enrichment.over_representation import log
@@ -310,7 +310,7 @@ def gsea_results_to_filtered_df(
     kegg_gsea_path = os.path.join(GSEA, KEGG, f'kegg_{dataset}.tsv')
     reactome_gsea_path = os.path.join(GSEA, REACTOME, f'reactome_{dataset}.tsv')
     wikipathways_gsea_path = os.path.join(GSEA, WIKIPATHWAYS, f'wikipathways_{dataset}.tsv')
-    merge_gsea_path = os.path.join(GSEA, MERGED_GENESET, f'merge_{dataset}.tsv')
+    merge_gsea_path = os.path.join(GSEA, MPATH, f'merge_{dataset}.tsv')
 
     # Load GSEA results and filter dataFrames
     kegg_pathway_df = filter_gsea_results(
@@ -349,7 +349,7 @@ def gsea_results_to_filtered_df(
     )
     merged_pathway_df = filter_gsea_results(
         merge_gsea_path,
-        MERGED_GENESET,
+        MPATH,
         kegg_manager=kegg_manager,
         reactome_manager=reactome_manager,
         wikipathways_manager=wikipathways_manager,
@@ -362,7 +362,7 @@ def gsea_results_to_filtered_df(
     # Merge pathway dataframe without applying filters
     merged_total_df = filter_gsea_results(
         merge_gsea_path,
-        MERGED_GENESET,
+        MPATH,
         kegg_manager=kegg_manager,
         reactome_manager=reactome_manager,
         wikipathways_manager=wikipathways_manager,

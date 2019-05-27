@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 """CLI wrapper to export updated gene sets using ComPath."""
-
 import logging
 
 from pathway_forte.export_genesets_to_gmt import create_geneset_df, export_gmt_files, get_all_pathway_genesets

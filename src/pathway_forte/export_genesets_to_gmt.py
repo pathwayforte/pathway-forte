@@ -13,7 +13,7 @@ import pandas as pd
 from compath_utils import CompathManager
 
 from pathway_forte.constants import (
-    GENESET_COLUMN_NAMES, KEGG, MERGED_GENESET, NEW_KEGG_GENE_SETS, NEW_MERGED_GENE_SETS, NEW_REACTOME_GENE_SETS,
+    GENESET_COLUMN_NAMES, KEGG, MPATH, NEW_KEGG_GENE_SETS, NEW_MERGED_GENE_SETS, NEW_REACTOME_GENE_SETS,
     NEW_WIKIPATHWAYS_GENE_SETS, PATHWAY_ID, REACTOME, RESOURCE, TEMP_KEGG_PATHWAY_GENESET_CSV,
     TEMP_MERGED_PATHWAY_GENESET_CSV, TEMP_REACTOME_PATHWAY_GENESET_CSV,
     TEMP_WIKIPATHWAYS_PATHWAY_GENESET_CSV, WIKIPATHWAYS,
@@ -132,7 +132,7 @@ def create_geneset_df(all_pathway_genesets, mappings_dict):
 
         merged_genesets_flat = set(itt.chain(*merged_genesets))
 
-        row_dict[MERGED_GENESET] = merged_genesets_flat
+        row_dict[MPATH] = merged_genesets_flat
 
         df = df.append(row_dict, ignore_index=True, verify_integrity=True)
 
@@ -200,7 +200,7 @@ def export_gmt_files(df: pd.DataFrame):
     kegg_df = _remove_equivalence_in_df(df, KEGG)
     reactome_df = _remove_equivalence_in_df(df, REACTOME)
     wikipathways_df = _remove_equivalence_in_df(df, WIKIPATHWAYS)
-    merged_geneset_df = df[[PATHWAY_ID, RESOURCE, MERGED_GENESET]]
+    merged_geneset_df = df[[PATHWAY_ID, RESOURCE, MPATH]]
 
     # TODO replace these temp paths with proper usage of tempfile
     kegg_df.to_csv(TEMP_KEGG_PATHWAY_GENESET_CSV, header=False, index=False, sep='\t', encoding='utf-8')
