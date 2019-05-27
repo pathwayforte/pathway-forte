@@ -28,6 +28,7 @@ __all__ = [
 ]
 
 Identifier = Tuple[str, str]
+EquivalenceMapping = Mapping[Identifier, List[Identifier]]
 
 get_kegg_reactome_df = make_df_getter(KEGG_REACTOME_URL, KEGG_REACTOME_PATH)
 get_wp_reactome_df = make_df_getter(WP_REACTOME_URL, WP_REACTOME_PATH)
@@ -108,7 +109,7 @@ def load_compath_mapping_dfs() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame
     )
 
 
-def get_equivalent_mappings_dict() -> Mapping[Identifier, List[Identifier]]:
+def get_equivalent_mappings_dict() -> EquivalenceMapping:
     """Get mapping dictionary of all equivalent pairs of pathways.
 
     Special mappings are not included in the overall mappings as some of the WP pathways possess identical IDs.
@@ -147,86 +148,17 @@ def get_keggs(pathways):
     }
 
 
-def remap_comparison_df(
-        df: pd.DataFrame,
-        source_db: str,
-        target_db: str,
-        db_column_name: str = 'db',
-        identifier_column_name: str = 'Term',
-        pval_column_name: str = 'pval',
-        *,
-        equivalent_mappings_dict=None,
-) -> pd.DataFrame:
-    """
-    
-    :param df: 
-    :param source_db: This is the database that becomes the left one
-    :param target_db:
-    :param equivalent_mappings_dict: 
-    """
-    if equivalent_mappings_dict is None:
-        equivalent_mappings_dict = get_equivalent_mappings_dict()
-
-    source_indexes = df[db_column_name] == source_db
-
-    rows = []
-    for i, (source_identifier, source_pval) in df.loc[
-        source_indexes, [identifier_column_name, pval_column_name]].iterrows():
-        target_identifier, target_pval = None, 1.0
-        for x, y in equivalent_mappings_dict[source_db, source_identifier]:
-            if target_db == x:
-                target_identifier = y
-
-                pval_rows = df[df[identifier_column_name] == target_identifier]
-                try:
-                    target_pval = pval_rows.iloc[0][pval_column_name]
-                except IndexError:  # haha fuck you!
-                    target_pval = 1.0
-
-        rows.append((
-            source_db,
-            source_identifier,
-            source_pval,
-            target_db,
-            target_identifier,
-            target_pval,
-            np.log10(source_pval) - np.log10(target_pval),
-        ))
-
-    return pd.DataFrame(
-        rows,
-        columns=[
-            'source_db',
-            'source_identifier',
-            'source_pval',
-            'target_db',
-            'target_identifier',
-            'target_pval',
-            'pval_diff',
-        ]
-    )
-
-
 def get_equivalent_mapping_paired_test(
         df: pd.DataFrame,
         source_db: str,
         target_db: str,
         *,
-        db_column_name: Optional[str] = None,
-        identifier_column_name: Optional[str] = None,
-        pval_column_name: Optional[str] = None,
-        equivalent_mappings_dict: Optional[Mapping] = None,
+        db_column_name: str,
+        identifier_column_name: str,
+        pval_column_name: str,
+        equivalent_mappings_dict: Optional[EquivalenceMapping] = None,
         test: str = 'wilcoxon',
 ) -> float:
-    if db_column_name is None:
-        db_column_name = 'db'
-
-    if identifier_column_name is None:
-        identifier_column_name = 'Term'
-
-    if pval_column_name is None:
-        pval_column_name = 'pval'
-
     remapped_df = remap_comparison_df(
         df=df,
         source_db=source_db,
@@ -244,18 +176,84 @@ def get_equivalent_mapping_paired_test(
     else:
         raise ValueError('invalid test type: {test}')
 
-    _, p_value = test(remapped_df.pval_diff.tolist())
+    _, p_value = test(remapped_df['mlp_diff'].tolist())
     return p_value
+
+
+def remap_comparison_df(
+        df: pd.DataFrame,
+        source_db: str,
+        target_db: str,
+        *,
+        db_column_name: str,
+        identifier_column_name: str,
+        pval_column_name: str,
+        equivalent_mappings_dict: Optional[EquivalenceMapping] = None,
+) -> pd.DataFrame:
+    """
+    
+    :param df: 
+    :param source_db: This is the database that becomes the left one
+    :param target_db:
+    :param equivalent_mappings_dict: 
+    """
+    if equivalent_mappings_dict is None:
+        equivalent_mappings_dict = get_equivalent_mappings_dict()
+
+    source_indexes = df[db_column_name] == source_db
+
+    rows = []
+    it = df.loc[source_indexes, [identifier_column_name, pval_column_name]].iterrows()
+    for i, (source_identifier, source_p) in it:
+        target_identifier, target_p = None, 1.0
+        for x, y in equivalent_mappings_dict[source_db, source_identifier]:
+            if target_db == x:
+                target_identifier = y
+
+                pval_rows = df[df[identifier_column_name] == target_identifier]
+                try:
+                    target_p = pval_rows.iloc[0][pval_column_name]
+                except IndexError:  # if no p-value found, default to 1.0
+                    target_p = 1.0
+
+        source_mlp = -np.log10(source_p)
+        target_mlp = -np.log10(target_p)
+        rows.append((
+            source_db,
+            source_identifier,
+            source_p,
+            source_mlp,
+            target_db,
+            target_identifier,
+            target_p,
+            target_mlp,
+            target_mlp - source_mlp,
+        ))
+
+    return pd.DataFrame(
+        rows,
+        columns=[
+            'source_db',
+            'source_identifier',
+            'source_p',
+            'source_mlp',
+            'target_db',
+            'target_identifier',
+            'target_p',
+            'target_mlp',
+            'mlp_diff',
+        ]
+    )
 
 
 def get_mlp_distribution_tests(
         df: pd.DataFrame,
         datasets: Iterable[str],
         *,
-        identifier_column_name=None,
-        pval_column_name=None,
-        db_column_name: str = 'db',
-        equivalent_mappings_dict: Optional[Mapping] = None,
+        identifier_column_name: str,
+        pval_column_name: str,
+        db_column_name: str,
+        equivalent_mappings_dict: Optional[EquivalenceMapping] = None,
         alpha: float = 0.05,
 ) -> pd.DataFrame:
     rows = []
@@ -302,6 +300,7 @@ def get_mlp_distribution_tests(
                 ks_p,
                 -np.log10(ks_p),
                 wilcoxon_p,
+                -np.log10(wilcoxon_p),
                 ks_paired_mlp_p,
                 -np.log10(ks_paired_mlp_p),
             ))
@@ -312,12 +311,13 @@ def get_mlp_distribution_tests(
             'dataset',
             'comparison',
             'ks_p',
+            'ks_mlp',
             'wilcoxon_p',
             'wilcoxon_mlp',
-            'ks_paired_mlp_p',
-            'ks_paired_mlp_mlp',
+            'ks_paired_p',
+            'ks_paired_mlp',
         ],
     )
     rv['wilcoxon_significant'] = rv['wilcoxon_p'] < alpha
-    rv['ks_paired_mlp_significant'] = rv['ks_paired_mlp_p'] < alpha
+    rv['ks_paired_significant'] = rv['ks_paired_p'] < alpha
     return rv
