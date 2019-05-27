@@ -4,12 +4,12 @@
 
 from collections import defaultdict
 from functools import partial
-from typing import List, Mapping, Tuple
+from typing import Iterable, List, Mapping, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 from bio2bel.downloading import make_df_getter
-from scipy.stats import kstest, wilcoxon
+from scipy.stats import ks_2samp, kstest, wilcoxon
 
 from .constants import (
     IS_PART_OF, KEGG, KEGG_REACTOME_PATH, KEGG_REACTOME_URL, KEGG_WP_PATH, KEGG_WP_URL, MAPPING_TYPE, SOURCE_ID,
@@ -24,6 +24,7 @@ __all__ = [
     'get_equivalent_mappings_dict',
     'remap_comparison_df',
     'get_equivalent_mapping_paired_test',
+    'get_mlp_distribution_tests',
 ]
 
 Identifier = Tuple[str, str]
@@ -162,7 +163,6 @@ def remap_comparison_df(
     :param source_db: This is the database that becomes the left one
     :param target_db:
     :param equivalent_mappings_dict: 
-    :return: 
     """
     if equivalent_mappings_dict is None:
         equivalent_mappings_dict = get_equivalent_mappings_dict()
@@ -211,13 +211,22 @@ def get_equivalent_mapping_paired_test(
         df: pd.DataFrame,
         source_db: str,
         target_db: str,
-        db_column_name: str = 'db',
-        identifier_column_name: str = 'Term',
-        pval_column_name: str = 'pval',
         *,
-        equivalent_mappings_dict=None,
-        test='wilcoxon',
+        db_column_name: Optional[str] = None,
+        identifier_column_name: Optional[str] = None,
+        pval_column_name: Optional[str] = None,
+        equivalent_mappings_dict: Optional[Mapping] = None,
+        test: str = 'wilcoxon',
 ) -> float:
+    if db_column_name is None:
+        db_column_name = 'db'
+
+    if identifier_column_name is None:
+        identifier_column_name = 'Term'
+
+    if pval_column_name is None:
+        pval_column_name = 'pval'
+
     remapped_df = remap_comparison_df(
         df=df,
         source_db=source_db,
@@ -237,3 +246,78 @@ def get_equivalent_mapping_paired_test(
 
     _, p_value = test(remapped_df.pval_diff.tolist())
     return p_value
+
+
+def get_mlp_distribution_tests(
+        df: pd.DataFrame,
+        datasets: Iterable[str],
+        *,
+        identifier_column_name=None,
+        pval_column_name=None,
+        db_column_name: str = 'db',
+        equivalent_mappings_dict: Optional[Mapping] = None,
+        alpha: float = 0.05,
+) -> pd.DataFrame:
+    rows = []
+
+    for dataset in datasets:
+        dataset_df = df[df.dataset == dataset]
+        for comparison in dataset_df.comparison.unique():
+            dataset_comparison_df = dataset_df[dataset_df.comparison == comparison]
+
+            # 2 sample KS test
+            _, ks_p = ks_2samp(*[
+                group[pval_column_name].values
+                for name, group in dataset_comparison_df.groupby(db_column_name)
+            ])
+
+            # Wilcoxon test of the differences of the paired differences of MLP-values
+            source_db, target_db = comparison.split('_')
+            wilcoxon_p = get_equivalent_mapping_paired_test(
+                dataset_comparison_df,
+                source_db,
+                target_db,
+                identifier_column_name=identifier_column_name,
+                pval_column_name=pval_column_name,
+                db_column_name=db_column_name,
+                equivalent_mappings_dict=equivalent_mappings_dict,
+                test='wilcoxon',
+            )
+
+            # KS Test of the differences of the paired differences of MLP-values
+            ks_paired_mlp_p = get_equivalent_mapping_paired_test(
+                dataset_comparison_df,
+                source_db,
+                target_db,
+                identifier_column_name=identifier_column_name,
+                pval_column_name=pval_column_name,
+                db_column_name=db_column_name,
+                equivalent_mappings_dict=equivalent_mappings_dict,
+                test='ks',
+            )
+
+            rows.append((
+                dataset,
+                comparison,
+                ks_p,
+                -np.log10(ks_p),
+                wilcoxon_p,
+                ks_paired_mlp_p,
+                -np.log10(ks_paired_mlp_p),
+            ))
+
+    rv = pd.DataFrame(
+        rows,
+        columns=[
+            'dataset',
+            'comparison',
+            'ks_p',
+            'wilcoxon_p',
+            'wilcoxon_mlp',
+            'ks_paired_mlp_p',
+            'ks_paired_mlp_mlp',
+        ],
+    )
+    rv['wilcoxon_significant'] = rv['wilcoxon_p'] < alpha
+    rv['ks_paired_mlp_significant'] = rv['ks_paired_mlp_p'] < alpha
+    return rv
