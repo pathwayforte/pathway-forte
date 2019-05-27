@@ -3,12 +3,13 @@
 """Function to deal with ComPath mappings."""
 
 from collections import defaultdict
+from functools import partial
 from typing import List, Mapping, Tuple
 
 import numpy as np
 import pandas as pd
 from bio2bel.downloading import make_df_getter
-from scipy.stats import wilcoxon
+from scipy.stats import kstest, wilcoxon
 
 from .constants import (
     IS_PART_OF, KEGG, KEGG_REACTOME_PATH, KEGG_REACTOME_URL, KEGG_WP_PATH, KEGG_WP_URL, MAPPING_TYPE, SOURCE_ID,
@@ -22,7 +23,7 @@ __all__ = [
     'load_compath_mapping_dfs',
     'get_equivalent_mappings_dict',
     'remap_comparison_df',
-    'get_equivalent_mapping_wilcoxon',
+    'get_equivalent_mapping_paired_test',
 ]
 
 Identifier = Tuple[str, str]
@@ -169,7 +170,8 @@ def remap_comparison_df(
     source_indexes = df[db_column_name] == source_db
 
     rows = []
-    for i, (source_identifier, source_pval) in df.loc[source_indexes, [identifier_column_name, pval_column_name]].iterrows():
+    for i, (source_identifier, source_pval) in df.loc[
+        source_indexes, [identifier_column_name, pval_column_name]].iterrows():
         target_identifier, target_pval = None, 1.0
         for x, y in equivalent_mappings_dict[source_db, source_identifier]:
             if target_db == x:
@@ -205,7 +207,7 @@ def remap_comparison_df(
     )
 
 
-def get_equivalent_mapping_wilcoxon(
+def get_equivalent_mapping_paired_test(
         df: pd.DataFrame,
         source_db: str,
         target_db: str,
@@ -214,6 +216,7 @@ def get_equivalent_mapping_wilcoxon(
         pval_column_name: str = 'pval',
         *,
         equivalent_mappings_dict=None,
+        test='wilcoxon',
 ) -> float:
     remapped_df = remap_comparison_df(
         df=df,
@@ -225,5 +228,12 @@ def get_equivalent_mapping_wilcoxon(
         equivalent_mappings_dict=equivalent_mappings_dict,
     )
 
-    _, p_value = wilcoxon(remapped_df.pval_diff.tolist())
+    if test == 'wilcoxon':
+        test = wilcoxon
+    elif test == 'ks':
+        test = partial(kstest, cdf='uniform')
+    else:
+        raise ValueError('invalid test type: {test}')
+
+    _, p_value = test(remapped_df.pval_diff.tolist())
     return p_value
