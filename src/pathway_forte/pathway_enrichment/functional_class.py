@@ -53,7 +53,7 @@ def create_cls_file(gene_expression_file, normal_sample_file, tumor_sample_file,
         w.write(data[:-1])
 
 
-def run_gsea(gene_exp: str, gene_set: str, phenotype_class: str, permutations: int = 10, output_dir: str = GSEA):
+def run_gsea(gene_exp: str, gene_set: str, phenotype_class: str, permutations: int = 500, output_dir: str = GSEA):
     """Run GSEA on a given dataset with a given gene set.
 
     :param gene_exp: file with gene expression data
