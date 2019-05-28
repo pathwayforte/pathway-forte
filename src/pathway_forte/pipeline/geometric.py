@@ -12,13 +12,13 @@ from pathway_forte.pathway_enrichment.over_representation import (
 from pathway_forte.pipeline.import_gmt import gmt_parser
 
 __all__ = [
-    'do_geometric',
+    'do_hypergeometric',
 ]
 
 logger = logging.getLogger(__name__)
 
 
-def do_geometric(
+def do_hypergeometric(
         gmt_path: str,
         fold_changes_path: str,
         apply_threshold: bool,

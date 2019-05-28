@@ -86,14 +86,14 @@ def perform_hypergeometric_test(
     :param threshold: significance threshold (by default 0.05)
     """
     rows = []
-    for pathway_id, pathway_gene_set in pathway_dict.items():
+    for (pathway_id, database), pathway_gene_set in pathway_dict.items():
         # Prepare the test table to conduct the fisher test
         test_table = _prepare_hypergeometric_test(genes_to_test, pathway_gene_set, gene_universe)
         # Calculate fisher test (returns tuple of odds ratio and p_value
         p_value = fisher_exact(test_table, alternative='greater')[1]
-        rows.append((pathway_id, p_value))
+        rows.append((database, pathway_id, p_value))
 
-    df = pd.DataFrame(rows, columns=['pathway_id', 'pval'])
+    df = pd.DataFrame(rows, columns=['database', 'pathway_id', 'pval'])
     correction_test = multipletests(df.pval, method='fdr_bh')
     df['qval'] = correction_test[1]
 

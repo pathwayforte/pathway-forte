@@ -11,7 +11,7 @@ from sklearn import metrics
 
 from pathway_forte.constants import CANCER_DATA_SETS
 from pathway_forte.pipeline import (
-    do_binary_prediction, do_export, do_geometric, do_gsea, do_gsea_msig, do_ssgsea,
+    do_binary_prediction, do_export, do_hypergeometric, do_gsea, do_gsea_msig, do_ssgsea,
     do_stability_prediction, do_subtype_prediction, do_survival_prediction,
 )
 
@@ -48,11 +48,11 @@ def ora():
 @click.option('-s', '--fold-changes', type=click.Path(exists=True), required=True, help='Path to fold changes file')
 @click.option('--no-threshold', is_flag=True, help='Do not apply threshold')
 @click.option('-o', '--output', type=click.Path(), help='Optional path for output JSON file')
-def geometric(genesets, fold_changes, no_threshold, output):
-    """Performs one-tailed hyper geometric test enrichment."""
+def hypergeometric(genesets, fold_changes, no_threshold, output):
+    """Performs one-tailed hypergeometric test enrichment."""
     # Reverse threshold boolean (if "--no-threshold" threshold=False, else threshold=True)
     threshold = not no_threshold
-    do_geometric(genesets, fold_changes, threshold, output)
+    do_hypergeometric(genesets, fold_changes, threshold, output)
 
 
 @main.group()
