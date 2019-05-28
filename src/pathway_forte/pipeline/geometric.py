@@ -29,7 +29,7 @@ def do_hypergeometric(
 
     significant_genes = filter_p_value(fc_df, apply_threshold)
 
-    logger.info(f'There are a total of {len(significant_genes)} significant genes from the original {fc_df.shape[0]}.')
+    logger.info(f'Number significant genes: {len(significant_genes)}/{fc_df.shape[0]}.')
 
     # Note that the parser filters out gene sets smaller than 3 and larger than 1000
     gene_sets = gmt_parser(gmt_path)
@@ -39,9 +39,6 @@ def do_hypergeometric(
         gene_sets,
         apply_threshold=apply_threshold,
     )
-
-    if apply_threshold:
-        logger.info('Filtering out pathways with q values > 0.05 according to fdr_bh')
 
     if output is None:
         output = os.path.join(os.getcwd(), 'results.tsv')

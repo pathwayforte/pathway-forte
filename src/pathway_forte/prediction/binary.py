@@ -22,7 +22,7 @@ __all__ = [
     'train_elastic_net_model',
 ]
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def ssgsea_nes_to_df(ssgsea_scores_csv, classes_file, removed_random: Optional[int] = None):
@@ -126,7 +126,7 @@ def train_elastic_net_model(
 
     # Iterator to calculate metrics for each CV step
     for i, (glm_elastic, y_test, y_pred) in enumerate(it):
-        log.info(f'Iteration {i}: {glm_elastic.get_params()}')
+        logger.info(f'Iteration {i}: {glm_elastic.get_params()}')
         auc_scores.append(roc_auc_score(y_test, y_pred))
 
         # Export a pickle the model of the given CV

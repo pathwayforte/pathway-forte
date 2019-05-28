@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
 """This module contain the functional class methods implemented in PathwayForte. For now, GSEA and ssGSEA"""
+
 import itertools as itt
+import logging
 import os
 from collections import defaultdict
 from typing import Optional
@@ -18,8 +20,9 @@ from pathway_forte.constants import (
     CLASSES, GSEA, KEGG, MPATH, PHENOTYPE_CLASSES, REACTOME, SSGSEA, WIKIPATHWAYS,
 )
 from pathway_forte.mappings import get_equivalent_mappings_dict, get_mapping_dict, load_compath_mapping_dfs
-from pathway_forte.pathway_enrichment.over_representation import log
 from pathway_forte.utils import get_num_samples
+
+logger = logging.getLogger(__name__)
 
 
 def create_cls_file(gene_expression_file, normal_sample_file, tumor_sample_file, data):
@@ -472,8 +475,6 @@ def get_analogs_comparison_numbers(
     # assert actual_num_dict[(WIKIPATHWAYS, REACTOME)] == actual_num_dict[(REACTOME, WIKIPATHWAYS)], \
     #     'Error with Reactome, Wikipathways'
 
-
-
     expected_num_dict = {
         (KEGG, REACTOME): len(
             get_pathways_by_resource(kegg_reactome_pathway_df[pathway_column], KEGG)
@@ -678,7 +679,7 @@ def run_ssgsea(
         processes=processes,
         format='png',
     )
-    log.info('Done with ssGSEA')
+    logger.info('Done with ssGSEA')
     return single_sample_gsea
 
 
@@ -706,10 +707,10 @@ def filter_gene_exp_data(expression_data: pd.DataFrame, gmt_file: str):
     # Genes to be removed because they are not present in the gene sets
     counter = len(genes_to_remove)
 
-    log.info(f'Expression data has {len(filtered_expression_data.index.values)}')
-    log.info(f'Gene universe has {len(gene_universe)}')
-    log.info(f'{counter} were removed in expression data')
-    log.info(
+    logger.info(f'Expression data has {len(filtered_expression_data.index.values)}')
+    logger.info(f'Gene universe has {len(gene_universe)}')
+    logger.info(f'{counter} were removed in expression data')
+    logger.info(
         f'{(len(filtered_expression_data.index.values) - counter) / len(gene_universe) * 100:.4f}% '
         f'of the gene expression data is mapped to the pathway datasets')
 

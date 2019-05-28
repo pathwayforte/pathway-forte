@@ -12,11 +12,11 @@ from statsmodels.stats.multitest import multipletests
 
 from pathway_forte.constants import FC_COLUMNS, GENE_SYMBOL, P_VALUE
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
-def read_fold_change_df(path) -> pd.DataFrame:
-    """Read csv with gene names, fold changes and their pvalues."""
+def read_fold_change_df(path: str) -> pd.DataFrame:
+    """Read csv with gene names, fold changes and their p-values."""
     df = pd.read_csv(path)
 
     # Check all columns are present
@@ -31,19 +31,21 @@ def read_fold_change_df(path) -> pd.DataFrame:
     return df
 
 
-def filter_p_value(df, p_value=True, cutoff=0.05):
+def filter_p_value(df: pd.DataFrame, p_value: bool = True, cutoff: float = 0.05):
     """Return significantly differentially expressed genes in fold change df."""
     # Apply p_value threshold too
     if p_value:
         query_exp = f'{P_VALUE} <= {cutoff}'
-
         df = df.query(query_exp)
 
     return set(df[GENE_SYMBOL])
 
 
-def _prepare_hypergeometric_test(query_gene_set: Set[str], pathway_gene_set: Set[str],
-                                 gene_universe: int) -> np.ndarray:
+def _prepare_hypergeometric_test(
+        query_gene_set: Set[str],
+        pathway_gene_set: Set[str],
+        gene_universe: int,
+) -> np.ndarray:
     """Prepare the matrix for hypergeometric test calculations.
 
     :param query_gene_set: gene set to test against pathway
@@ -98,6 +100,7 @@ def perform_hypergeometric_test(
     df['qval'] = correction_test[1]
 
     if apply_threshold:
+        logger.info('Filtering out pathways with q-values > 0.05 according to fdr_bh')
         df = df[df['qval'] < threshold]
 
     return df

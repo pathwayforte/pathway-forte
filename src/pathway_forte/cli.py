@@ -11,8 +11,8 @@ from sklearn import metrics
 
 from pathway_forte.constants import CANCER_DATA_SETS
 from pathway_forte.pipeline import (
-    do_binary_prediction, do_export, do_hypergeometric, do_gsea, do_gsea_msig, do_ssgsea,
-    do_stability_prediction, do_subtype_prediction, do_survival_prediction,
+    do_binary_prediction, do_export, do_gsea, do_gsea_msig, do_hypergeometric, do_ssgsea, do_stability_prediction,
+    do_subtype_prediction, do_survival_prediction,
 )
 
 logger = logging.getLogger(__name__)
@@ -44,8 +44,10 @@ def ora():
 
 
 @ora.command()
-@click.option('-d', '--genesets', type=click.Path(exists=True), required=True, help='Path to GMT file')
-@click.option('-s', '--fold-changes', type=click.Path(exists=True), required=True, help='Path to fold changes file')
+@click.option('-d', '--genesets', type=click.Path(file_okay=True, dir_okay=False, exists=True), required=True,
+              help='Path to GMT file')
+@click.option('-s', '--fold-changes', type=click.Path(file_okay=True, dir_okay=False, exists=True), required=True,
+              help='Path to fold changes file')
 @click.option('--no-threshold', is_flag=True, help='Do not apply threshold')
 @click.option('-o', '--output', type=click.Path(), help='Optional path for output JSON file')
 def hypergeometric(genesets, fold_changes, no_threshold, output):

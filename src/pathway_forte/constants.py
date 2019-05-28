@@ -8,7 +8,7 @@ import time
 
 from bio2bel import get_data_dir
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 SOURCE = os.path.join(os.path.abspath(os.path.join(dir_path, os.pardir)))
@@ -129,7 +129,7 @@ def check_gmt_files():
 
     # Raise error if files are not found
     if not gmt_file_names:
-        log.warning('GMT files missing, please create them by running the "export_gene_sets" command.')
+        logger.warning('GMT files missing, please create them by running the "export_gene_sets" command.')
         return None, None, None, None
 
     kegg_gmt_file, reactome_gmt_file, wikipathways_gmt_file, merge_gmt_file = None, None, None, None
@@ -153,11 +153,11 @@ def check_gmt_files():
             continue
 
         else:
-            log.warning('Unknown file {} in gmt folder'.format(os.path.join(GMT_FOLDER, file)))
+            logger.warning('Unknown file {} in gmt folder'.format(os.path.join(GMT_FOLDER, file)))
 
     # If any of the GMT files is missing print warning
     if not all([kegg_gmt_file, reactome_gmt_file, wikipathways_gmt_file, merge_gmt_file]):
-        log.warning('GMT files missing, please create them by running the "export_gene_sets" command.')
+        logger.warning('GMT files missing, please create them by running the "export_gene_sets" command.')
 
     return kegg_gmt_file, reactome_gmt_file, wikipathways_gmt_file, merge_gmt_file
 
