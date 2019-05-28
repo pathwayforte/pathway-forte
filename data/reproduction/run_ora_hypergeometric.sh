@@ -24,7 +24,7 @@ pathway_forte ora hypergeometric --genesets "$GMT_DIR/wikipathways_kegg_analogs.
 pathway_forte ora hypergeometric --genesets "$GMT_DIR/wikipathways_kegg_analogs.gmt" --fold-changes "$INPUT/lihc_deseq2.csv" -o "$OUTPUT/ora_geometric_wikipathways_kegg_lihc.tsv"
 pathway_forte ora hypergeometric --genesets "$GMT_DIR/wikipathways_kegg_analogs.gmt" --fold-changes "$INPUT/prad_deseq2.csv" -o "$OUTPUT/ora_geometric_wikipathways_kegg_prad.tsv"
 
-pathway_forte ora hypergeometric --genesets "$GMT_DIR/analogous_mpath.gmt" --fold-changes "$INPUT/brca_deseq2.csv" -o "$OUTPUT/ora_geometric_analogues_mpath_brca.tsv"
-pathway_forte ora hypergeometric --genesets "$GMT_DIR/analogous_mpath.gmt" --fold-changes "$INPUT/kirc_deseq2.csv" -o "$OUTPUT/ora_geometric_analogues_mpath_kirc.tsv"
-pathway_forte ora hypergeometric --genesets "$GMT_DIR/analogous_mpath.gmt" --fold-changes "$INPUT/lihc_deseq2.csv" -o "$OUTPUT/ora_geometric_analogues_mpath_lihc.tsv"
-pathway_forte ora hypergeometric --genesets "$GMT_DIR/analogous_mpath.gmt" --fold-changes "$INPUT/prad_deseq2.csv" -o "$OUTPUT/ora_geometric_analogues_mpath_prad.tsv"
+pathway_forte ora hypergeometric --genesets "$GMT_DIR/mpath_analogs.gmt" --fold-changes "$INPUT/brca_deseq2.csv" -o "$OUTPUT/ora_geometric_analogs_mpath_brca.tsv"
+pathway_forte ora hypergeometric --genesets "$GMT_DIR/mpath_analogs.gmt" --fold-changes "$INPUT/kirc_deseq2.csv" -o "$OUTPUT/ora_geometric_analogs_mpath_kirc.tsv"
+pathway_forte ora hypergeometric --genesets "$GMT_DIR/mpath_analogs.gmt" --fold-changes "$INPUT/lihc_deseq2.csv" -o "$OUTPUT/ora_geometric_analogs_mpath_lihc.tsv"
+pathway_forte ora hypergeometric --genesets "$GMT_DIR/mpath_analogs.gmt" --fold-changes "$INPUT/prad_deseq2.csv" -o "$OUTPUT/ora_geometric_analogs_mpath_prad.tsv"
