@@ -3,6 +3,37 @@ PathwayForte
 .. automodule:: pathway_forte
 
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Command Line Interface :
+
+   cli
+   pipeline
+   constants
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Pathway Enrichment
+
+   enrichment/ora
+   enrichment/fcs
+   enrichment/pt
+   enrichment/utils
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Predictive Modeling
+
+   prediction/binary
+   prediction/multiclass
+   prediction/survival
+   prediction/utils
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Mappings
+
+   mappings
 
 Installation |pypi_version| |python_versions| |pypi_license|
 ------------------------------------------------------------
@@ -81,14 +112,8 @@ References
 
 .. [3] Weinstein, J. N., *et al.* (2013). `The cancer genome atlas pan-cancer analysis project <https://doi.org/10.1038/ng.2764>`_. *Nature genetics*, 45(10), 1113.
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
-
-   cli
-   pipeline
-   constants
-
-Index
-=====
+Indices and Tables
+------------------
 * :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
