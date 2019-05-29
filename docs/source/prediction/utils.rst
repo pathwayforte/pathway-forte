@@ -1,6 +1,6 @@
 Utils
 =====
-
 Complementary methods for prediction analysis.
 
-.. autoclass:: pathway_forte.prediction.utils
+.. automodule:: pathway_forte.prediction.utils
+   :members:

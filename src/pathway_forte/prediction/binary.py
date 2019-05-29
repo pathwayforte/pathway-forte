@@ -1,6 +1,14 @@
 # -*- coding: utf-8 -*-
 
-"""Elastic Net regression with nested cross validation module."""
+"""Elastic Net regression with nested cross validation module.
+
+This workflow trains an elastic net model for a binary classification task
+(e.g., tumor vs. normal patients). The training is conducted using a nested
+cross validation approach (the number of cross validation in both loops can
+be selected). The model used can be easily changed since most of the models
+in `scikit-learn <https://scikit-learn.org/>`_ (the machine learning
+library used by this package) required the same input.
+"""
 
 import logging
 import os
@@ -100,9 +108,10 @@ def train_elastic_net_model(
         model_name: str,
         max_iter: Optional[int] = None,
         export: bool = True,
-):
-    """Train elastic net model within a defined hyperparameter space via a nested cross validation given
-    expression data.
+) -> List[float]:
+    """Train elastic net model via a nested cross validation given expression data.
+
+    Uses a defined hyperparameter space for l1_ratio.
 
     :param numpy.array x: 2D matrix of pathway scores and samples
     :param list y: class labels of samples
@@ -112,7 +121,7 @@ def train_elastic_net_model(
     :param model_name: name of the model
     :param max_iter: default to 1000 to ensure convergence
     :param export: Export the models using :mod:`joblib`
-    :return:
+    :return: A list of AUC-ROC scores
     """
     auc_scores = []
     it = _help_train_elastic_net_model(

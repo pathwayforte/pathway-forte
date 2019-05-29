@@ -1,5 +1,4 @@
 Over Representation Methods
 ===========================
-
-.. autoclass:: pathway_forte.enrichment.over_representation
-
+.. automodule:: pathway_forte.pathway_enrichment.over_representation
+   :members:

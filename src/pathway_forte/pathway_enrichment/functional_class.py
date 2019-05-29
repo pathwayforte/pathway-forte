@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
-"""This module contain the functional class methods implemented in PathwayForte. For now, GSEA and ssGSEA"""
+"""This module contain the functional class methods implemented in PathwayForte.
+
+For now, includes GSEA and ssGSEA."""
 
 import itertools as itt
 import logging
@@ -82,31 +84,31 @@ def run_gsea(gene_exp: str, gene_set: str, phenotype_class: str, permutations: i
 
 
 def filter_gsea_results(
-        gsea_results_file,
+        gsea_results_path: str,
         source,
         kegg_manager: Optional[bio2bel_kegg.Manager] = None,
         reactome_manager: Optional[bio2bel_reactome.Manager] = None,
         wikipathways_manager: Optional[bio2bel_wikipathways.Manager] = None,
         p_value: Optional[float] = None,
-        absolute_nes_filter=None,
-        geneset_set_filter_minimum_size=None,
-        geneset_set_filter_maximum_size=None,
-):
+        absolute_nes_filter: Optional[float] = None,
+        geneset_set_filter_minimum_size: Optional[int] = None,
+        geneset_set_filter_maximum_size: Optional[int] = None,
+) -> pd.DataFrame:
     """Get top and bottom rankings from GSEA results.
 
-    :param gsea_results_file: path to GSEA results in .tsv file format
+    :param gsea_results_path: path to GSEA results in .tsv file format
+    :param source:
+    :param kegg_manager: KEGG manager
+    :param reactome_manager: Reactome manager
+    :param wikipathways_manager: WikiPathways manager
     :param p_value: maximum p value allowed
     :param absolute_nes_filter: filter by magnitude of normalized enrichment scores
     :param geneset_set_filter_minimum_size: filter to include a minimum number of genes in a gene set
     :param geneset_set_filter_maximum_size: filter to include a maximum number of genes in a gene set
-    :param kegg_manager: KEGG manager
-    :param reactome_manager: Reactome manager
-    :param wikipathways_manager: WikiPathways manager
     :return: list of pathways ranked as having the highest and lowest significant enrichment scores
-    :rtype list
     """
     # Read GSEA results to pandas dataFrame
-    gsea_results_df = pd.read_csv(gsea_results_file, sep='\t')
+    gsea_results_df = pd.read_csv(gsea_results_path, sep='\t')
 
     # Filter dataFrame to include only those pathways with a p-value less than X
     if p_value is not None:
@@ -245,11 +247,10 @@ def pathway_names_to_df(
 
     :param filtered_gsea_results_df:
     :param all_pathway_ids: list of pathway IDs
-    :param source: pathway source (i.e., database name or 'Merged')
+    :param source: pathway source (i.e., database name or 'MPath')
     :param kegg_manager: KEGG manager
     :param reactome_manager: Reactome manager
     :param wikipathways_manager: WikiPathways manager
-    :return: list of pathway names in rankings
     """
     if source == KEGG:
         filtered_gsea_results_df['pathway_name'] = [

@@ -12,6 +12,7 @@ extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
     'sphinx.ext.viewcode',
+    'sphinx_autodoc_typehints',
     'sphinx_click.ext',
 ]
 templates_path = ['_templates']
