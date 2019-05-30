@@ -86,7 +86,7 @@ References
        
 License
 -------
-The Pathway Forte logo is derived from `"Muscle Up icon" <https://game-icons.net/1x1/lorc/muscle-up.html>`_ by Lorc, used under CC BY 3.0.
+The Pathway Forte logo is derived from `"Muscle Fat" <https://game-icons.net/1x1/lorc/muscle-fat.html>`_ by Lorc, used under CC BY 3.0.
 
 .. |build| image:: https://travis-ci.com/pathwayforte/pathway-forte.svg?branch=master
     :target: https://travis-ci.com/pathwayforte/pathway-forte
