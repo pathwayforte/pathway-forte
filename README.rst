@@ -3,6 +3,14 @@ PathwayForte |build| |docs| |coverage| |zenodo|
 A Python package for benchmarking pathway databases with functional enrichment and prediction methods
 tasks.
 
+If you find ``pathway_forte`` useful for your work, please consider citing:
+
+.. [1] Mubeen, S., Hoyt, C. T., Gemünd, A., Hofmann-Apitius, M., Fröhlich, H., &
+       Domingo-Fernández, D. (2019). `The Impact of Pathway Database Choice on
+       Statistical Enrichment Analysis and Predictive Modeling
+       <https://doi.org/10.1101/654442>`_. *bioRxiv*, 654442.
+
+
 Installation |pypi_version| |python_versions| |pypi_license|
 ------------------------------------------------------------
 ``pathway_forte`` can be installed from `PyPI <https://pypi.org/project/pathway-forte>`_
