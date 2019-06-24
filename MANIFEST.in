@@ -8,6 +8,7 @@ include data/*
 include data/gmt_files
 recursive-include data/gmt_files *.gmt
 
+recursive-include data *.rst
 recursive-include data *.gmt
 recursive-include docs *.py
 recursive-include docs *.rst
