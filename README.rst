@@ -91,7 +91,7 @@ References
        across pathway databases <https://doi.org/10.1038/s41540-018-0078-8>`_. *npj Syst Biol Appl.*, 4(1):43.
 .. [4] Weinstein, J. N., *et al.* (2013). `The cancer genome atlas pan-cancer analysis project
        <https://doi.org/10.1038/ng.2764>`_. *Nature genetics*, 45(10), 1113.
-       
+
 License
 -------
 The Pathway Forte logo is derived from `"Muscle Fat" <https://game-icons.net/1x1/lorc/muscle-fat.html>`_ by Lorc, used under CC BY 3.0.
