@@ -6,6 +6,7 @@ global-exclude *.py[cod] __pycache__ *.so *.dylib .DS_Store *.gpickle
 exclude .bumpversion.cfg
 include data
 include data/gmt_files
+recursive-include data/gmt_files *.gmt
 
 recursive-include data *.gmt
 recursive-include data *.rst

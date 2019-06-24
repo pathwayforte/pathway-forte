@@ -32,10 +32,9 @@ class TestOra(unittest.TestCase):
 
         enriched_pathways_df = perform_hypergeometric_test(
             significant_genes,
-            gene_sets,
+            {('pathway1', 'kegg'): ['A', 'B', 'C', 'D'], ('pathway2', 'kegg'): ['E', 'F', 'G', 'H']},
             apply_threshold=True,
         )
 
         self.assertIsInstance(enriched_pathways_df, pd.DataFrame)
-        self.assertEqual(len(enriched_pathways_df.keys()), 1)
-        self.assertIn('pathway1', enriched_pathways_df.keys())
+        self.assertEqual(enriched_pathways_df.shape, (1, 4))
