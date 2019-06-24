@@ -14,4 +14,4 @@ recursive-include docs *.rst
 recursive-include docs Makefile
 
 include *.rst *.txt *.yml LICENSE tox.ini .flake8 doc8.ini .coveragerc
-
+recursive-include data *.sh
