@@ -88,7 +88,7 @@ def prepare_ssgsea_data_for_survival_analysis(
              row["Overall Survival (Months)"])
         )
 
-    dt = np.dtype([('status', 'bool'), ('days_to_death', 'float')])
+    dt = np.dtype([('status', 'bool'), ('overall_survival_months', 'float')])
     event_time_struc_array = np.array(survival_info, dtype=dt)
 
     # Remove extra column
@@ -99,7 +99,6 @@ def prepare_ssgsea_data_for_survival_analysis(
 
 def survival_data_to_csv(clinical_data: str, dataset):
     """Get survival data from clinical data file."""
-
     # Read clinical meta data file
     clinical_data_df = pd.read_csv(clinical_data, sep='\t')
 
@@ -155,7 +154,7 @@ def train_survival_model(
         x_train = x.iloc[train_indexes]
         x_test = x.iloc[test_indexes]
         y_train = np.asarray([y[train_index] for train_index in train_indexes])
-        y_test = np.asarray([y[test_index] for test_index in test_indexes])
+        # y_test = np.asarray([y[test_index] for test_index in test_indexes])
 
         # Instantiate Cox’s proportional hazard’s regression model with elastic net penalty
         coxnet = CoxnetSurvivalAnalysis()
@@ -275,11 +274,12 @@ def _help_run_survival_all_datasets(
 
 
 def run_survival_on_dataset(
-        ssgsea_file,
+        ssgsea_file: str,
         outer_cv_splits: int,
         inner_cv_splits: int,
         param_grid,
 ):
+    """Run survival analysis on specified dataset."""
     if 'msig' in ssgsea_file:
         file_name = ssgsea_file.strip('.tsv').split('_')
         pathway_resource = '{}_{}'.format(file_name[0], file_name[1])
@@ -294,7 +294,7 @@ def run_survival_on_dataset(
 
         cancer_data_set = cancer_data_set.replace('.tsv', '')
 
-        # Check that is a valid file
+        # Check that file is valid
         if pathway_resource not in PATHWAY_RESOURCES or cancer_data_set not in CANCER_DATA_SETS:
             logger.warning('Skipping file {}'.format(ssgsea_file))
 

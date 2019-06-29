@@ -21,6 +21,7 @@ SVC_PARAM_GRID = {
 
 
 def get_sample_ids_with_cancer_subtypes(path: str, subtype_column: str = 'subtype_BRCA_Subtype_PAM50'):
+    """Get sample IDs where BRCA subtypes are reported according to PAM50 classification."""
     df = pd.read_csv(path, sep='\t')
     df.drop("barcode", axis=1, inplace=True)  # TODO: remove barcode column upon creation
     df.drop(df[df[subtype_column] == 'Normal'].index, inplace=True)
@@ -28,6 +29,7 @@ def get_sample_ids_with_cancer_subtypes(path: str, subtype_column: str = 'subtyp
 
 
 def stabilize_ssgsea_scores_df(path: str) -> pd.DataFrame:
+    """Clean ssGSEA dataframe."""
     df = pd.read_csv(path, sep='\t', header=0)
 
     # Transpose dataFrame to arrange columns as pathways and rows as genes
@@ -50,6 +52,7 @@ def filter_by_index(df: pd.DataFrame, keep_indexes: Collection) -> None:
 
 
 def get_class_labels(features_df, labels_df):
+    """Get cancer subtype labels for each sample."""
     # Merge dataFrames and match sample ssGSEA scores with their cancer subtypes
     merged_dfs = pd.merge(features_df, labels_df, left_index=True, right_index=True)
 
@@ -64,6 +67,7 @@ def get_class_labels(features_df, labels_df):
 
 
 def convert_df_to_features_array(df):
+    """Convert pathway features dataFrame to numpy array."""
     # Get list of pathways as features
     feature_cols = list(df.columns.values)
 
@@ -86,7 +90,7 @@ def train_multiclass_classifier(
         explained_variance: Optional[float] = None,
         get_estimator=None,
 ):
-    """Train SVM with multiclass labels with a defined hyper-parameter space via a nested cross validation for TCGA
+    """Train SVM with multiclass labels with a defined hyper-parameter space via nested cross validation for TCGA
     expression data.
 
     :param Numpy.ndarray x: 2D array of pathway scores and samples

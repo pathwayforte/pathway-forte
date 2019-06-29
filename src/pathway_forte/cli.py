@@ -51,7 +51,7 @@ def ora():
 @click.option('--no-threshold', is_flag=True, help='Do not apply threshold')
 @click.option('-o', '--output', type=click.Path(), help='Optional path for output JSON file')
 def hypergeometric(genesets, fold_changes, no_threshold, output):
-    """Performs one-tailed hypergeometric test enrichment."""
+    """Perform one-tailed hypergeometric test enrichment."""
     # Reverse threshold boolean (if "--no-threshold" threshold=False, else threshold=True)
     threshold = not no_threshold
     do_hypergeometric(genesets, fold_changes, threshold, output)
@@ -219,6 +219,7 @@ def test_stability_prediction(
         max_iterations,
         turn_off_warnings,
 ):
+    """Test stability of prediction"""
     if turn_off_warnings:
         click.echo("ssgsea_nes_to_dfWarnings are now turned off")
         warnings.simplefilter('ignore')
