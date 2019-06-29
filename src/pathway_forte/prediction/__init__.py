@@ -1,3 +1,3 @@
 # -*- coding: utf-8 -*-
 
-"""Evaluation of Prediction Tasks based on Pathway Information."""
+"""Evaluation of prediction tasks based on pathway information."""

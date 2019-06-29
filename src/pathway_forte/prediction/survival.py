@@ -129,7 +129,9 @@ def train_survival_model(
         inner_cv_splits,
         param_grid,
 ):
-    """Train survival model with ssGSEA normalized enrichment scores (NES) from TCGA expression data and cBioPortal
+    """Train survival model.
+
+    The model is trained with ssGSEA normalized enrichment scores (NES) from TCGA expression data and cBioPortal
     survival data on patient survival status and survival times.
 
     :param pandas.core.frame.DataFrame x: dataFrame of ssGSEA NES where controls are filtered out, as are

@@ -71,7 +71,9 @@ def test_stability(
         max_iter=1000,
         export=True
 ):
-    """Train elastic net model within a defined hyperparameter space via a nested cross validation after removing a
+    """Train model after removing specified features.
+
+    Train elastic net model within a defined hyperparameter space via a nested cross validation after removing a
     percentage of the data set.
 
     :param int percentage_to_remove: percentage of pathways that will be removed [0,100]
@@ -99,3 +101,4 @@ def test_stability(
     )
 
     # TODO: Return the features that were removed
+    return results

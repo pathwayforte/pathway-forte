@@ -90,7 +90,9 @@ def train_multiclass_classifier(
         explained_variance: Optional[float] = None,
         get_estimator=None,
 ):
-    """Train SVM with multiclass labels with a defined hyper-parameter space via nested cross validation for TCGA
+    """Train multiclass classifier.
+
+    Train SVM with multiclass labels with a defined hyper-parameter space via nested cross validation for TCGA
     expression data.
 
     :param Numpy.ndarray x: 2D array of pathway scores and samples

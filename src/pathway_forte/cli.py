@@ -219,7 +219,7 @@ def test_stability_prediction(
         max_iterations,
         turn_off_warnings,
 ):
-    """Test stability of prediction"""
+    """Test stability of prediction."""
     if turn_off_warnings:
         click.echo("ssgsea_nes_to_dfWarnings are now turned off")
         warnings.simplefilter('ignore')
