@@ -76,8 +76,9 @@ def gmt_parser(
     logging.info(f"{filsets_num} gene sets were removed with filters: max_size={max_size} and min_size={min_size}")
 
     if filsets_num == len(genesets_dict):
-        logging.error("No gene sets passed throught filtering condition!!!, try new paramters again!\n" +
-                      "Note: Gene names for gseapy is case sensitive.")
+        logging.error(
+            "No gene sets passed filtering condition!! Try new parameters!\n" + "GSEApy gene names are case sensitive."
+        )
         sys.exit(1)
     else:
         return genesets_filter

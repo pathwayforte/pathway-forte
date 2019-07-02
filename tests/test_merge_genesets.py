@@ -25,6 +25,7 @@ BLACK_LIST = {
 
 class TestMergeGmt(unittest.TestCase):
     """Test merged gene set file."""
+    
     @unittest.skipUnless(os.path.exists(DATA), 'Only run if data folder exists')
     def test_gmt_file(self):
         """Check concordance of pathways in merged gene set file and equivalent pathway mappings dictionary."""
