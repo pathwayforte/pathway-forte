@@ -28,6 +28,7 @@ def do_subtype_prediction(
         chain_pca: bool,
         explained_variance: Optional[float] = None,
 ):
+    """Perform subtype prediction."""
     # Adapt ssGSEA dataframe for scikit learn purposes
     enrichment_score_df = stabilize_ssgsea_scores_df(ssgsea_path)
     # Prepare sample ids file

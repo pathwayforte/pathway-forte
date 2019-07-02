@@ -2,7 +2,8 @@
 
 """This module contain the functional class methods implemented in PathwayForte.
 
-For now, includes GSEA and ssGSEA."""
+Currently this includes GSEA and ssGSEA.
+"""
 
 import itertools as itt
 import logging
@@ -28,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 
 def create_cls_file(gene_expression_file, normal_sample_file, tumor_sample_file, data):
-    """Create categorical (e.g. tumor vs sample) class file format (i.e., .cls) for input into GSEA
+    """Create categorical (e.g. tumor vs sample) class file format (i.e., .cls) for input into GSEA.
 
     :param str gene_expression_file: Text file containing expression values for each gene from each sample.
     :param str normal_sample_file:
@@ -199,7 +200,7 @@ def merge_statistics(merged_pathways_df: pd.DataFrame, dataset: str):
 
 
 def rearrange_df_columns(df: pd.DataFrame) -> pd.DataFrame:
-    """Rearrange order of columns"""
+    """Rearrange order of columns."""
     cols = df.columns.tolist()
     cols = cols[-1:] + cols[:-1]
     df = df[cols]
@@ -207,12 +208,21 @@ def rearrange_df_columns(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def get_pathway_names(
-        database,
-        pathway_df,
+        database: str,
+        pathway_df: pd.DataFrame,
         kegg_manager: Optional[bio2bel_kegg.Manager] = None,
         reactome_manager: Optional[bio2bel_reactome.Manager] = None,
         wikipathways_manager: Optional[bio2bel_wikipathways.Manager] = None
 ):
+    """Get pathway names from database specific pathway IDs.
+
+    :param database:
+    :param pathway_df:
+    :param kegg_manager:
+    :param reactome_manager:
+    :param wikipathways_manager:
+    :return:
+    """
     if database == KEGG:
         pathway_df['pathway_name'] = [
             kegg_manager.get_pathway_by_id('path:' + pathway_id)
@@ -310,7 +320,7 @@ def gsea_results_to_filtered_df(
         geneset_set_filter_minimum_size=None,
         geneset_set_filter_maximum_size=None
 ):
-    """Get filtered GSEA results dataFrames"""
+    """Get filtered GSEA results dataFrames."""
     kegg_gsea_path = os.path.join(GSEA, KEGG, f'kegg_{dataset}.tsv')
     reactome_gsea_path = os.path.join(GSEA, REACTOME, f'reactome_{dataset}.tsv')
     wikipathways_gsea_path = os.path.join(GSEA, WIKIPATHWAYS, f'wikipathways_{dataset}.tsv')
@@ -409,7 +419,7 @@ def get_pathways_by_resource(pathways: iter, resource: str) -> list:
 
 
 def _pairwise_helper(pathways, mappings, source_resource, target_resource):
-    """Helper for pairwise comparing pathways."""
+    """Compare pairwise pathways."""
     counter = 0
 
     source_pathways = get_pathways_by_resource(pathways, source_resource)
@@ -434,7 +444,7 @@ def get_analogs_comparison_numbers(
         *,
         pathway_column="pathway_id"
 ):
-    """Get number of existing versus expected pairwise mappings"""
+    """Get number of existing versus expected pairwise mappings."""
     # Load mappings
     equivalent_mappings_dict = get_equivalent_mappings_dict()
 
@@ -505,7 +515,7 @@ def get_pairwise_mapping_numbers(
         reactome_pathway_df,
         wikipathways_pathway_df,
 ):
-    """Get number of existing versus expected pairwise mappings"""
+    """Get number of existing versus expected pairwise mappings."""
     pairwise_comparison = [
         (kegg_pathway_df, KEGG),
         (reactome_pathway_df, REACTOME),
@@ -518,7 +528,7 @@ def get_pairwise_mapping_numbers(
     equivalent_mappings_dict = get_mapping_dict(final_df, 'equivalentTo')
     # Dictionary with hierarchical mappings. This dictionary is not used to build the gene set for now, but it could be
     # used in the future for other applications
-    part_of_mappings_dict = get_mapping_dict(final_df, 'isPartOf')
+    # part_of_mappings_dict = get_mapping_dict(final_df, 'isPartOf')
 
     actual_mappings = {}
     expected_mappings = {}
@@ -550,7 +560,7 @@ def get_pairwise_mappings(
         reactome_pathway_df,
         wikipathways_pathway_df,
 ):
-    """Get pairwise mappings"""
+    """Get pairwise mappings."""
     pairwise_comparison = [
         (kegg_pathway_df, KEGG),
         (reactome_pathway_df, REACTOME),
@@ -576,7 +586,6 @@ def get_pairwise_mappings(
 
 def compare_database_results(df_1, resource_1, df_2, resource_2, mapping_dict, check_contradiction=False):
     """Compare pathways in the dataframe from enrichment results to evaluate the concordance in similar pathways."""
-
     # Ensure index is set to pathway id column (not in place)
     df_1 = df_1.set_index('pathway_id')
     df_2 = df_2.set_index('pathway_id')
@@ -624,7 +633,6 @@ def compare_database_results(df_1, resource_1, df_2, resource_2, mapping_dict, c
 
 def get_matching_pairs(df_1, resource_1, df_2, resource_2, equivalent_mappings_dict):
     """Get equivalent pathways and their direction of change."""
-
     df1_subset = df_1[['pathway_id', 'status']]
     df1_tuples = [tuple(x) for x in df1_subset.values]
 

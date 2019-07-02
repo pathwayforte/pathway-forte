@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 def do_binary_prediction(data, outer_cv_splits, inner_cv_splits, max_iter):
+    """Predict binary class labels."""
     make_classifier_results_directory()
     logger.info(f'Training Elastic Net via nested CV in the {data} dataset with'
                 f' {outer_cv_splits} outer loops and {inner_cv_splits} inner loops')

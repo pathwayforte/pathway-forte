@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 def do_export():
+    """Export gene set files."""
     all_pathway_genesets = get_all_pathway_genesets()
     equivalent_mappings_dict = get_equivalent_mappings_dict()
     df = create_geneset_df(all_pathway_genesets, equivalent_mappings_dict)

@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 def do_gsea_msig(data):
+    """Perform GSEA on MSigDB pathways."""
     make_gsea_export_directories()
     make_ssgsea_export_directories()
 

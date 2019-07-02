@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
-""""""
+"""CLI wrapper to perform survival prediction."""
 
+import json
 import logging
 import os
-import json
 
 from pathway_forte.constants import CLASSIFIER_RESULTS, SSGSEA
 from pathway_forte.prediction.binary import get_l1_ratios
@@ -23,6 +23,7 @@ def do_survival_prediction(
         outer_cv_splits,
         inner_cv_splits,
 ):
+    """Perform survival analysis."""
     # List of parameters to use in grid search
     param_grid = {
         'l1_ratio': get_l1_ratios(),

@@ -24,7 +24,7 @@ def do_hypergeometric(
         apply_threshold: bool,
         output: Optional[str] = None,
 ):
-    """Wrapper to run hyper-geometric test."""
+    """Run hyper-geometric test."""
     fc_df = read_fold_change_df(fold_changes_path)
 
     significant_genes = filter_p_value(fc_df, apply_threshold)

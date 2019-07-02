@@ -9,7 +9,7 @@ from collections import Counter
 
 import pandas as pd
 
-from pathway_forte.constants import check_gmt_files, DATA
+from pathway_forte.constants import DATA, check_gmt_files
 from pathway_forte.mappings import get_mapping_dict, load_compath_mapping_dfs
 
 logger = logging.getLogger(__name__)
@@ -24,8 +24,10 @@ BLACK_LIST = {
 
 
 class TestMergeGmt(unittest.TestCase):
+    """Test merged gene set file."""
     @unittest.skipUnless(os.path.exists(DATA), 'Only run if data folder exists')
     def test_gmt_file(self):
+        """Check concordance of pathways in merged gene set file and equivalent pathway mappings dictionary."""
         kegg_reactome_df, kegg_wikipathways_df, wikipathways_reactome_df, special_mappings_df = load_compath_mapping_dfs()
 
         equivalent_mappings_dict = get_mapping_dict(

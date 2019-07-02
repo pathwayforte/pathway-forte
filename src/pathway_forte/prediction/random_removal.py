@@ -86,7 +86,6 @@ def test_stability(
     :param int max_iter: default to 1000 to ensure convergence
     :return:
     """
-
     # TODO: Remove X% of the x_features
 
     results = train_elastic_net_model(

@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 def do_ssgsea(data):
+    """Perform ssGSEA."""
     make_ssgsea_export_directories()
 
     # Read data

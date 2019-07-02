@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 def do_gsea(data, permutations):
+    """Perform GSEA."""
     make_gsea_export_directories()
 
     gene_exp = pd.read_csv(EXPRESSION_MATRIX.format(data), sep='\t')

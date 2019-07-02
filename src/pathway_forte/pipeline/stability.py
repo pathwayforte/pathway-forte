@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""CLI wrapper to perform ssGSEA."""
+"""CLI wrapper to train elastic net model."""
 
 import logging
 
