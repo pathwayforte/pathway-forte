@@ -721,7 +721,7 @@ def filter_gene_exp_data(expression_data: pd.DataFrame, gmt_file: str):
     logger.info(f'{counter} were removed in expression data')
     logger.info(
         f'{(len(filtered_expression_data.index.values) - counter) / len(gene_universe) * 100:.4f}% '
-        f'of the gene expression data is mapped to the pathway datasets')
+        f'of the pathway gene sets is mapped to the gene expression')
 
     # Remove non HGNC genes and return dataframe
     return filtered_expression_data.drop(genes_to_remove)
