@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+"""Methods for the evaluation of the p-value distributions."""
+
 from functools import partial
 from typing import Iterable, Optional
 
@@ -26,6 +28,7 @@ def get_equivalent_mapping_paired_test(
         equivalent_mappings_dict: Optional[EquivalenceMapping] = None,
         test: str = 'wilcoxon',
 ) -> float:
+    """Remap the p-values of the equivalent pathways to conduct paired test."""
     remapped_df = remap_comparison_df(
         df=df,
         source_db=source_db,
@@ -59,6 +62,7 @@ def remap_comparison_df(
         pval_column_name: str,
         equivalent_mappings_dict: Optional[EquivalenceMapping] = None,
 ) -> pd.DataFrame:
+    """Remap equivalent pathways results."""
     if equivalent_mappings_dict is None:
         equivalent_mappings_dict = get_equivalent_mappings_dict()
 
@@ -119,6 +123,7 @@ def get_mlp_distribution_tests(
         equivalent_mappings_dict: Optional[EquivalenceMapping] = None,
         alpha: float = 0.05,
 ) -> pd.DataFrame:
+    """Conduct a comparison of the p-value distributions using multiple tests."""
     _df = df[df.comparison.notna()]
 
     rows = []
