@@ -669,6 +669,8 @@ def run_ssgsea(
         gene_set: str,
         output_dir: str = SSGSEA,
         processes: int = 1,
+        max_size: int = 3000,
+        min_size: int = 15,
 ) -> SingleSampleGSEA:
     """Run single sample GSEA (ssGSEA) on filtered gene expression data set.
 
@@ -681,7 +683,8 @@ def run_ssgsea(
         data=filtered_expression_data,
         gene_sets=gene_set,
         outdir=output_dir,  # do not write output to disk
-        max_size=3000,
+        max_size=max_size,
+        min_size=min_size,
         sample_norm_method='rank',  # choose 'custom' for your own rank list
         permutation_num=0,  # skip permutation procedure, because you don't need it
         no_plot=True,  # skip plotting to speed up
