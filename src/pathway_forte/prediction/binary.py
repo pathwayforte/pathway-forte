@@ -18,7 +18,7 @@ import gseapy
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import ElasticNetCV
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_auc_score, precision_recall_curve, auc
 from sklearn.model_selection import StratifiedKFold
 from tqdm import tqdm
 
@@ -140,6 +140,8 @@ def train_elastic_net_model(
         auc_scores.append(roc_auc_score(y_test, y_pred))
 
         # TODO: Generate the AUC PR
+        precision, recall, _ = precision_recall_curve(y_test, y_pred)
+        auc_pr_scores.append(auc(recall, precision))
 
         # Export a pickle the model of the given CV
         if export:
@@ -170,7 +172,7 @@ def _help_train_elastic_net_model(
     # Iterator over the CVs
     for train_indexes, test_indexes in iterator:
         # Splice the entire data set so only the training and test sets for this CV iter are used
-        x_train, x_test = x.iloc[train_indexes], x.iloc[test_indexes]
+        x_train, x_test = x[train_indexes], x[test_indexes]
         y_train = [y[train_index] for train_index in train_indexes]
         y_test = [y[test_index] for test_index in test_indexes]
 
