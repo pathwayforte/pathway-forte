@@ -12,7 +12,7 @@ library used by this package) required the same input.
 
 import logging
 import os
-from typing import List, Optional, Union
+from typing import List, Optional, Tuple, Union
 
 import gseapy
 import numpy as np
@@ -108,7 +108,7 @@ def train_elastic_net_model(
         model_name: str,
         max_iter: Optional[int] = None,
         export: bool = True,
-) -> List[float]:
+) -> Tuple[List[float], List[float]]:
     """Train elastic net model via a nested cross validation given expression data.
 
     Uses a defined hyperparameter space for l1_ratio.
@@ -124,6 +124,7 @@ def train_elastic_net_model(
     :return: A list of AUC-ROC scores
     """
     auc_scores = []
+    auc_pr_scores = []
     it = _help_train_elastic_net_model(
         x=x,
         y=y,
@@ -138,13 +139,15 @@ def train_elastic_net_model(
         logger.info(f'Iteration {i}: {glm_elastic.get_params()}')
         auc_scores.append(roc_auc_score(y_test, y_pred))
 
+        # TODO: Generate the AUC PR
+
         # Export a pickle the model of the given CV
         if export:
             import joblib
             joblib.dump(glm_elastic, os.path.join(CLASSIFIER_RESULTS, f'{model_name}_{i}.joblib'))
 
-    # Return a list with all AUC scores for each CV step
-    return auc_scores
+    # Return a list with all AUC/AUC-PR scores for each CV step
+    return auc_scores, auc_pr_scores
 
 
 def _help_train_elastic_net_model(
@@ -166,7 +169,6 @@ def _help_train_elastic_net_model(
 
     # Iterator over the CVs
     for train_indexes, test_indexes in iterator:
-
         # Splice the entire data set so only the training and test sets for this CV iter are used
         x_train, x_test = x.iloc[train_indexes], x.iloc[test_indexes]
         y_train = [y[train_index] for train_index in train_indexes]

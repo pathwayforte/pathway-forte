@@ -55,7 +55,7 @@ def do_binary_prediction(data, outer_cv_splits, inner_cv_splits, max_iter):
     for name, tsv_path, fmt in _ds:
         logger.info(f'Training on {name}')
         x, y = ssgsea_nes_to_df(tsv_path, phenotypes)
-        aucs = train_elastic_net_model(
+        aucs, aucs_pr = train_elastic_net_model(
             x,
             y,
             outer_cv_splits=outer_cv_splits,
@@ -65,4 +65,5 @@ def do_binary_prediction(data, outer_cv_splits, inner_cv_splits, max_iter):
             max_iter=max_iter,
         )
         plot_aucs(aucs, data, fmt, CLASSIFIER_RESULTS)
-        logger.info(f"{name} AUCs: {aucs}")
+        logger.info(f"AUCs: {name} AUCs: {aucs}")
+        logger.info(f"AUC-PRs: {name} AUCs: {aucs_pr}")

@@ -33,7 +33,7 @@ def do_stability_prediction(
     l1_ratio = get_l1_ratios()
     logger.info(f'L1 ratios: {l1_ratio}')
 
-    results = train_elastic_net_model(
+    results, _ = train_elastic_net_model(
         ssgsea_scores_path,
         phenotypes_path,
         outer_cv_splits=outer_cv_splits,

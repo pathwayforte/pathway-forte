@@ -88,7 +88,7 @@ def test_stability(
     """
     # TODO: Remove X% of the x_features
 
-    results = train_elastic_net_model(
+    results, _ = train_elastic_net_model(
         x_features,
         y_labels,
         outer_cv_splits,
