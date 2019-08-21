@@ -9,7 +9,8 @@ import pandas as pd
 from pathway_forte.constants import (
     EXPRESSION_MATRIX, KEGG_SSGSEA, KEGG_SSGSEA_TSV, MERGE_SSGSEA, MERGE_SSGSEA_TSV, REACTOME_SSGSEA,
     REACTOME_SSGSEA_TSV, TODAY, WIKIPATHWAYS_SSGSEA, WIKIPATHWAYS_SSGSEA_TSV, check_gmt_files,
-    make_ssgsea_export_directories,
+    make_ssgsea_export_directories, MSIGDB_KEGG_GENE_SETS, MSIGDB_REACTOME_GENE_SETS, MSIG_SSGSEA, KEGG_MSIG_SSGSEA_TSV,
+    REACTOME_MSIG_SSGSEA_TSV
 )
 from pathway_forte.pathway_enrichment.functional_class import filter_gene_exp_data, run_ssgsea
 
@@ -38,6 +39,12 @@ def do_ssgsea(data):
         ('WikiPathways', wikipathways_gene_set, WIKIPATHWAYS_SSGSEA, WIKIPATHWAYS_SSGSEA_TSV),
         ('MergeDataset', merge_gene_set, MERGE_SSGSEA, MERGE_SSGSEA_TSV),
     ]
+
+    _ds = [
+        ('MSig Reactome', MSIGDB_KEGG_GENE_SETS, MSIG_SSGSEA, KEGG_MSIG_SSGSEA_TSV),
+        ('MSig KEGG', MSIGDB_REACTOME_GENE_SETS, MSIG_SSGSEA, REACTOME_MSIG_SSGSEA_TSV),
+    ]
+
     for name, gene_set, output_dir, fmt in _ds:
         logger.info(f'Running {name}')
         results = run_ssgsea(filtered_expression_data, gene_set, output_dir=output_dir)
