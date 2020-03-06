@@ -122,3 +122,8 @@ The Pathway Forte logo is derived from `"Muscle Fat" <https://game-icons.net/1x1
 
 .. |zenodo| image:: https://zenodo.org/badge/178654585.svg
     :target: https://zenodo.org/badge/latestdoi/178654585
+    
+Disclaimer
+-----------
+
+PathForte is a scientific software that has been developed in an academic capacity, and thus comes with no warranty or guarantee of maintenance, support, or back-up of data. 
