@@ -7,12 +7,11 @@ stages:
   - lint
   - docs
   - test
-jobs:
+matrix:
   include:
     # lint stage
     - stage: lint
       env: TOXENV=manifest
-    - env: TOXENV=flake8
     - env: TOXENV=xenon
     - env: TOXENV=pyroma
     # docs stage
@@ -23,9 +22,11 @@ jobs:
     # test stage
     - stage: test
       env: TOXENV=py
-matrix:
+
   allow_failures:
-      - env: TOXENV=xenon
+    - env: TOXENV=xenon
+    - env: TOXENV=flake8
+
 install:
 - pip install --upgrade pip
 - pip install tox codecov coverage
