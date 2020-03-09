@@ -12,7 +12,6 @@ matrix:
     # lint stage
     - stage: lint
       env: TOXENV=manifest
-    - env: TOXENV=xenon
     - env: TOXENV=pyroma
     # docs stage
     - stage: docs
