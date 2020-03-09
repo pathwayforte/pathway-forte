@@ -99,8 +99,7 @@ The Pathway Forte logo is derived from `"Muscle Fat" <https://game-icons.net/1x1
 Disclaimer
 -----------
 PathForte is a scientific software that has been developed in an academic capacity, and thus comes with no warranty or
-guarantee of maintenance, support, or back-up of data. 
-
+guarantee of maintenance, support, or back-up of data.
 
 .. |build| image:: https://travis-ci.com/pathwayforte/pathway-forte.svg?branch=master
     :target: https://travis-ci.com/pathwayforte/pathway-forte
