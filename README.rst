@@ -96,6 +96,12 @@ License
 -------
 The Pathway Forte logo is derived from `"Muscle Fat" <https://game-icons.net/1x1/lorc/muscle-fat.html>`_ by Lorc, used under CC BY 3.0.
 
+Disclaimer
+-----------
+PathForte is a scientific software that has been developed in an academic capacity, and thus comes with no warranty or
+guarantee of maintenance, support, or back-up of data. 
+
+
 .. |build| image:: https://travis-ci.com/pathwayforte/pathway-forte.svg?branch=master
     :target: https://travis-ci.com/pathwayforte/pathway-forte
     :alt: Build Status
@@ -122,8 +128,3 @@ The Pathway Forte logo is derived from `"Muscle Fat" <https://game-icons.net/1x1
 
 .. |zenodo| image:: https://zenodo.org/badge/178654585.svg
     :target: https://zenodo.org/badge/latestdoi/178654585
-    
-Disclaimer
------------
-
-PathForte is a scientific software that has been developed in an academic capacity, and thus comes with no warranty or guarantee of maintenance, support, or back-up of data. 
