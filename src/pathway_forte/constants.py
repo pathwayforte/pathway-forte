@@ -164,6 +164,9 @@ def check_gmt_files():
 
 KEGG_GENE_SETS, REACTOME_GENE_SETS, WIKIPATHWAYS_GENE_SETS, MERGED_GENE_SETS = check_gmt_files()
 
+PATHBANK_PATH = 'https://pathbank.org/downloads/pathbank_all_proteins.csv.zip'
+PATHBANK_FILE = 'pathbank_all_proteins.csv'
+
 # Export the gene set with a time stamp
 TODAY = time.strftime("%d_%m_%Y")
 NEW_KEGG_GENE_SETS = os.path.join(GMT_FOLDER, f'kegg_geneset{TODAY}.gmt')

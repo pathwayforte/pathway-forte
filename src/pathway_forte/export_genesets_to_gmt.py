@@ -2,21 +2,24 @@
 
 """This module contains the code to export genesets to .gmt files."""
 
+import io
 import itertools as itt
 import logging
 import os
+import zipfile
+from _collections import defaultdict
 
 import bio2bel_kegg
 import bio2bel_reactome
 import bio2bel_wikipathways
 import pandas as pd
+import requests
 from compath_utils import CompathManager
-
 from pathway_forte.constants import (
     GENESET_COLUMN_NAMES, KEGG, MPATH, NEW_KEGG_GENE_SETS, NEW_MERGED_GENE_SETS, NEW_REACTOME_GENE_SETS,
     NEW_WIKIPATHWAYS_GENE_SETS, PATHWAY_ID, REACTOME, RESOURCE, TEMP_KEGG_PATHWAY_GENESET_CSV,
     TEMP_MERGED_PATHWAY_GENESET_CSV, TEMP_REACTOME_PATHWAY_GENESET_CSV,
-    TEMP_WIKIPATHWAYS_PATHWAY_GENESET_CSV, WIKIPATHWAYS,
+    TEMP_WIKIPATHWAYS_PATHWAY_GENESET_CSV, WIKIPATHWAYS, PATHBANK_FILE
 )
 
 __all__ = [
@@ -218,3 +221,47 @@ def export_gmt_files(df: pd.DataFrame):
     os.remove(TEMP_REACTOME_PATHWAY_GENESET_CSV)
     os.remove(TEMP_WIKIPATHWAYS_PATHWAY_GENESET_CSV)
     os.remove(TEMP_MERGED_PATHWAY_GENESET_CSV)
+
+
+def export_pathbank_geneset(PATHBANK_PATH: str, outfile: str):
+    """Download and extract zip file content and export PathBank gene sets."""
+    r = requests.get(PATHBANK_PATH)
+    z = zipfile.ZipFile(io.BytesIO(r.content))
+    z.extractall()
+
+    df = pd.read_csv(PATHBANK_FILE, sep=',')
+
+    # Get relevant columns
+    df_pathways_genes = df[['PathBank ID', 'Pathway Name', 'Gene Name']]
+    df_pathways_genes = df_pathways_genes.rename(
+        columns={
+            'PathBank ID': 'PathBankID',
+            'Pathway Name': 'PathwayName',
+            'Gene Name': 'GeneName'
+        }
+    )
+    # Drop rows if genes are NaN
+    df_pathways_genes.dropna(subset=['GeneName'], inplace=True)
+
+    geneset_dict = defaultdict(set)
+
+    for row in df_pathways_genes.itertuples(index=False):
+        # Get pathway ID-gene set dictionary
+        geneset_dict[row.PathBankID].add(row.GeneName)
+
+    geneset_df = pd.DataFrame.from_dict(data=geneset_dict, orient='index')
+
+    # Add resource column
+    geneset_df['Resource'] = pd.Series('pathbank', index=geneset_df.index)
+    geneset_df = geneset_df[['Resource'] + [col for col in geneset_df.columns if col != 'Resource']]
+
+    geneset_df.to_csv('pathbank.csv', header=False, sep='\t')
+
+    # Export gene set to gmt file format
+    with open('pathbank.csv', 'r') as file:
+        with open(outfile, 'w') as f:
+            for line in file:
+                line = line.rstrip()
+                f.write(line + '\n')
+
+    f.close()
