@@ -164,15 +164,25 @@ def check_gmt_files():
 
 KEGG_GENE_SETS, REACTOME_GENE_SETS, WIKIPATHWAYS_GENE_SETS, MERGED_GENE_SETS = check_gmt_files()
 
-PATHBANK_PATH = 'https://pathbank.org/downloads/pathbank_all_proteins.csv.zip'
-PATHBANK_FILE = 'pathbank_all_proteins.csv'
+PATHBANK_PATHWAYS_PATH = 'https://pathbank.org/downloads/pathbank_all_pathways.csv.zip'
+PATHBANK_PROTEINS_PATH = 'https://pathbank.org/downloads/pathbank_all_proteins.csv.zip'
+PATHBANK_PATHWAYS_FILE = 'pathbank_pathways.csv'
+PATHBANK_PROTEINS_FILE = 'pathbank_all_proteins.csv'
+
+PATHBANK_KEGG_MAPPINGS = "https://raw.githubusercontent.com/ComPath/compath-resources/master/mappings/pathbank_kegg.csv"
+PATHBANK_REACTOME_MAPPINGS = "https://raw.githubusercontent.com/ComPath/compath-resources/master/mappings/pathbank_reactome.csv"
+PATHBANK_WIKIPATHWAYS_MAPPINGS = "https://raw.githubusercontent.com/ComPath/compath-resources/master/mappings/pathbank_wikipathways.csv"
+
+PATHBANK_KEGG_FILE = 'pathbank_kegg.csv'
+PATHBANK_REACTOME_FILE = 'pathbank_reactome.csv'
+PATHBANK_WIKIPATHWAYS_FILE = 'pathbank_wikipathways.csv'
 
 # Export the gene set with a time stamp
 TODAY = time.strftime("%d_%m_%Y")
-NEW_KEGG_GENE_SETS = os.path.join(GMT_FOLDER, f'kegg_geneset{TODAY}.gmt')
-NEW_REACTOME_GENE_SETS = os.path.join(GMT_FOLDER, f'reactome_geneset{TODAY}.gmt')
-NEW_WIKIPATHWAYS_GENE_SETS = os.path.join(GMT_FOLDER, f'wikipathways_geneset{TODAY}.gmt')
-NEW_MERGED_GENE_SETS = os.path.join(GMT_FOLDER, f'mpath_geneset{TODAY}.gmt')
+NEW_KEGG_GENE_SETS = os.path.join(GMT_FOLDER, f'kegg_geneset_{TODAY}.gmt')
+NEW_REACTOME_GENE_SETS = os.path.join(GMT_FOLDER, f'reactome_geneset_{TODAY}.gmt')
+NEW_WIKIPATHWAYS_GENE_SETS = os.path.join(GMT_FOLDER, f'wikipathways_geneset_{TODAY}.gmt')
+NEW_MERGED_GENE_SETS = os.path.join(GMT_FOLDER, f'mpath_geneset_{TODAY}.gmt')
 
 TEMP_KEGG_PATHWAY_GENESET_CSV = os.path.join(GMT_FOLDER, 'kegg_pathway_geneset.csv')
 TEMP_REACTOME_PATHWAY_GENESET_CSV = os.path.join(GMT_FOLDER, 'reactome_pathway_geneset.csv')
