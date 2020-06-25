@@ -2,25 +2,16 @@
 
 """This module contains the code to export genesets to .gmt files."""
 
-import io
 import itertools as itt
-import logging
-import os
-import zipfile
 from _collections import defaultdict
 
 import bio2bel_kegg
 import bio2bel_reactome
 import bio2bel_wikipathways
 import pandas as pd
-import requests
 from compath_utils import CompathManager
-from pathway_forte.constants import (
-    GENESET_COLUMN_NAMES, KEGG, MPATH, NEW_KEGG_GENE_SETS, NEW_MERGED_GENE_SETS, NEW_REACTOME_GENE_SETS,
-    NEW_WIKIPATHWAYS_GENE_SETS, PATHWAY_ID, REACTOME, RESOURCE, TEMP_KEGG_PATHWAY_GENESET_CSV,
-    TEMP_MERGED_PATHWAY_GENESET_CSV, TEMP_REACTOME_PATHWAY_GENESET_CSV,
-    TEMP_WIKIPATHWAYS_PATHWAY_GENESET_CSV, WIKIPATHWAYS, PATHBANK_FILE
-)
+from pathway_forte.constants import *
+from pathway_forte.utils import handle_file_download, handle_zipfile_download
 
 __all__ = [
     'get_all_pathway_genesets',
@@ -223,31 +214,92 @@ def export_gmt_files(df: pd.DataFrame):
     os.remove(TEMP_MERGED_PATHWAY_GENESET_CSV)
 
 
-def export_pathbank_geneset(PATHBANK_PATH: str, outfile: str):
-    """Download and extract zip file content and export PathBank gene sets."""
-    r = requests.get(PATHBANK_PATH)
-    z = zipfile.ZipFile(io.BytesIO(r.content))
-    z.extractall()
+def export_pathbank_geneset(outfile: str):
+    """Download PathBank content and export PathBank gene sets for pathways that have mappings to PathMe."""
 
-    df = pd.read_csv(PATHBANK_FILE, sep=',')
+    logger.info('Downloading PathBank content.')
+    # Get PathBank pathways
+    handle_zipfile_download(PATHBANK_PATHWAYS_PATH)
+
+    # Get PathBank proteins
+    handle_zipfile_download(PATHBANK_PROTEINS_PATH)
+
+    logger.info('Getting ComPath mappings.')
+    # Get PathBank-PathMe mappings
+    handle_file_download(PATHBANK_KEGG_MAPPINGS, PATHBANK_KEGG_FILE)
+    handle_file_download(PATHBANK_REACTOME_MAPPINGS, PATHBANK_REACTOME_FILE)
+    handle_file_download(PATHBANK_WIKIPATHWAYS_MAPPINGS, PATHBANK_WIKIPATHWAYS_FILE)
+
+    # Read pathway ID mapping file
+    df_pathway_ids = pd.read_csv(PATHBANK_PATHWAYS_FILE, sep=',')
+    df_pathway_ids = df_pathway_ids.rename(columns={'SMPDB ID': 'SMPDBID', 'PW ID': 'PWID'})
+
+    # Read pathway-gene membership file
+    df_pathway_genes = pd.read_csv(PATHBANK_PROTEINS_FILE, sep=',')
 
     # Get relevant columns
-    df_pathways_genes = df[['PathBank ID', 'Pathway Name', 'Gene Name']]
-    df_pathways_genes = df_pathways_genes.rename(
+    df_id_name_gene = df_pathway_genes[['PathBank ID', 'Pathway Name', 'Gene Name']]
+    df_id_name_gene = df_id_name_gene.rename(
         columns={
             'PathBank ID': 'PathBankID',
             'Pathway Name': 'PathwayName',
             'Gene Name': 'GeneName'
         }
     )
-    # Drop rows if genes are NaN
-    df_pathways_genes.dropna(subset=['GeneName'], inplace=True)
+
+    # Drop genes if they are NaN
+    df_id_name_gene.dropna(subset=['GeneName'], inplace=True)
+
+    df_pathways_merged = pd.merge(
+        df_id_name_gene,
+        df_pathway_ids,
+        left_on='PathBankID',
+        right_on='SMPDBID',
+    )
+
+    df_pathways_merged = df_pathways_merged[['PWID', 'PathwayName', 'GeneName']]
+
+    # Concatenate PathBank mapping files
+    pathbank_mapping_files = [PATHBANK_KEGG_FILE, PATHBANK_REACTOME_FILE, PATHBANK_WIKIPATHWAYS_FILE]
+    with open('pathbank_mappings.csv', 'w') as f:
+        for fname in pathbank_mapping_files:
+            with open(fname) as infile:
+                f.write(infile.read())
+
+    pathbank_mappings = {}
+
+    # Get PathBank pathways with mappings to PathMe
+    all_pathbank_mappings_df = pd.read_csv('pathbank_mappings.csv', sep=',')
+    all_pathbank_mappings_df.rename(
+        columns={
+            'Source Resource': 'SourceResource',
+            'Source ID': 'SourceID',
+            'Source Name': 'SourceName',
+            'Mapping Type': 'MappingType',
+            'Target Resource': 'TargetResource',
+            'Target ID': 'TargetID',
+            'Target Name': 'TargetName'
+        },
+        inplace=True,
+    )
+
+    pathbank_mappings = {}
+
+    for row in all_pathbank_mappings_df.itertuples(index=False):
+        if row.SourceResource == 'pathbank':
+            pathbank_mappings[row.SourceName] = row.SourceID
+        elif row.TargetResource == 'pathbank':
+            pathbank_mappings[row.TargetName] = row.TargetID
 
     geneset_dict = defaultdict(set)
 
-    for row in df_pathways_genes.itertuples(index=False):
-        # Get pathway ID-gene set dictionary
-        geneset_dict[row.PathBankID].add(row.GeneName)
+    # Get pathway-gene set dictionary
+    for row in df_pathways_merged.itertuples(index=False):
+
+        for name, identifier in pathbank_mappings.items():
+
+            if row.PWID == identifier:
+                geneset_dict[identifier].add(row.GeneName)
 
     geneset_df = pd.DataFrame.from_dict(data=geneset_dict, orient='index')
 
@@ -255,13 +307,14 @@ def export_pathbank_geneset(PATHBANK_PATH: str, outfile: str):
     geneset_df['Resource'] = pd.Series('pathbank', index=geneset_df.index)
     geneset_df = geneset_df[['Resource'] + [col for col in geneset_df.columns if col != 'Resource']]
 
-    geneset_df.to_csv('pathbank.csv', header=False, sep='\t')
+    logger.info('Exporting PathBank gene sets.')
 
-    # Export gene set to gmt file format
-    with open('pathbank.csv', 'r') as file:
+    # Write PathBank genesets to gmt file format
+    geneset_df.to_csv('pathbank_file.csv', header=False, sep='\t')
+
+    with open('pathbank_file.csv', 'r') as file:
         with open(outfile, 'w') as f:
             for line in file:
                 line = line.rstrip()
                 f.write(line + '\n')
-
     f.close()
