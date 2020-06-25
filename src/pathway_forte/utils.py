@@ -2,9 +2,14 @@
 
 """Utilities module."""
 
+import io
 import os
+import urllib.request
+import zipfile
+from io import StringIO
 
 import matplotlib.pyplot as plt
+import requests
 import seaborn as sns
 
 
@@ -40,3 +45,17 @@ def get_num_samples(samples_file_path: str) -> int:
         sample_numbers = file.read().replace('\n', '')
 
     return int(sample_numbers)
+
+
+def handle_zipfile_download(path: str) -> None:
+    """Download and extract zip file content."""
+    r = requests.get(path)
+    z = zipfile.ZipFile(io.BytesIO(r.content))
+    z.extractall()
+
+
+def handle_file_download(url: str, filename: str):
+    """Handle file download from url, write to file and save to static directory."""
+    response = StringIO(urllib.request.urlopen(url).read().decode('utf-8'))
+    with open(filename, 'w') as f:
+        f.write(response.read())
