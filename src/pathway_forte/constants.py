@@ -137,16 +137,16 @@ def check_gmt_files():
     # Get gmt files using the prefix for each database
     for file in gmt_file_names:
 
-        if file.startswith('kegg_geneset'):
+        if file.startswith('kegg'):
             kegg_gmt_file = os.path.join(GMT_FOLDER, file)
 
-        elif file.startswith('reactome_geneset'):
+        elif file.startswith('reactome'):
             reactome_gmt_file = os.path.join(GMT_FOLDER, file)
 
-        elif file.startswith('wikipathways_geneset'):
+        elif file.startswith('wikipathways'):
             wikipathways_gmt_file = os.path.join(GMT_FOLDER, file)
 
-        elif file.startswith('mpath_geneset'):
+        elif file.startswith('mpath'):
             merge_gmt_file = os.path.join(GMT_FOLDER, file)
 
         elif file.startswith('msigdb') or file == 'README.rst' or file == 'concatenated_merge.gmt':
