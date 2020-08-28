@@ -17,7 +17,7 @@ from typing import List, Optional, Tuple, Union
 import gseapy
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import ElasticNetCV
+from sklearn import linear_model, model_selection
 from sklearn.metrics import roc_auc_score, average_precision_score, auc
 from sklearn.model_selection import StratifiedKFold
 from tqdm import tqdm
@@ -166,6 +166,9 @@ def _help_train_elastic_net_model(
     # tqdm wrapper to print the current CV state
     iterator = tqdm(skf.split(x, y), desc='Outer CV for binary prediction')
 
+    # Parameter Grid
+    param_grid = dict(l1_ratio=l1_ratio)
+
     # Iterator over the CVs
     for train_indexes, test_indexes in iterator:
         # Splice the entire data set so only the training and test sets for this CV iter are used
@@ -175,7 +178,14 @@ def _help_train_elastic_net_model(
 
         # Instantiate the model fitting along a regularization path (CV).
         # Inner loop
-        glm_elastic = ElasticNetCV(l1_ratio=l1_ratio, cv=inner_cv_splits, max_iter=max_iter)
+        estimator = linear_model.LogisticRegression(penalty='elasticnet', solver='saga', max_iter=max_iter)
+
+        glm_elastic = model_selection.GridSearchCV(
+            estimator=estimator,
+            param_grid=param_grid,
+            cv=inner_cv_splits,
+            scoring=roc_auc_score
+        )
 
         # Fit model with train data
         glm_elastic.fit(x_train, y_train)
